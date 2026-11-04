@@ -117,7 +117,7 @@ export default function ChiSiamoPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center space-y-6">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
@@ -153,12 +153,12 @@ export default function ChiSiamoPage() {
               </p>
               <p className="text-lg text-muted-foreground mb-8 text-pretty">
                 Il nostro obiettivo è formare non solo campioni sul campo, ma anche persone migliori nella vita,
-                attraverso l'insegnamento del rispetto, della disciplina e dello spirito di squadra.
+                attraverso l’insegnamento del rispetto, della disciplina e dello spirito di squadra.
               </p>
               <Button size="lg">Unisciti a Noi</Button>
             </div>
             <div className="relative">
-              <img
+              <img loading="lazy" decoding="async"
                 src="/images/2025-26/pages/promozione.webp"
                 alt="La famiglia Volleyball San Martino"
                 className="rounded-lg shadow-lg w-full"
@@ -219,8 +219,8 @@ export default function ChiSiamoPage() {
                 className={`text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1 py-0 ${membro.large ? "md:col-span-2 lg:col-span-2" : ""}`}
               >
                 <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-lg">
-                  <img
-                    src={membro.immagine || "/placeholder.svg"}
+                  <img loading="lazy" decoding="async"
+                    src={membro.immagine || "/images/placeholder.svg"}
                     alt={membro.nome}
                     className="h-full w-full object-cover"
                   />
@@ -250,7 +250,7 @@ export default function ChiSiamoPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <p className="text-muted-foreground text-pretty leading-relaxed">
-                In questo documento troverai la spiegazione completa del nuovo logo della società, realizzato da Nicolò Bertolotti (<a href="https://www.instagram.com/nb.comics/" target="_blank" className="text-volleyball-coral underline hover:text-primary">NB comics</a>):
+                In questo documento troverai la spiegazione completa del nuovo logo della società, realizzato da Nicolò Bertolotti (<a href="https://www.instagram.com/nb.comics/" target="_blank" rel="noopener noreferrer" className="text-volleyball-coral underline hover:text-primary">NB comics</a>):
                 il suo significato simbolico, la scelta cromatica e il legame con i valori e la storia
                 del Volleyball San Martino.
               </p>

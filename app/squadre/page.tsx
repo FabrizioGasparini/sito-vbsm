@@ -60,7 +60,7 @@ export default function SquadrePage() {
 
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 pt-20">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 1, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="rounded-2xl border border-white/10 bg-[#08111d]/70 backdrop-blur-sm p-6 sm:p-8 lg:p-10 mb-8"
@@ -73,7 +73,7 @@ export default function SquadrePage() {
           </h1>
           <div className="h-px w-full bg-gradient-to-r from-red-500/80 via-red-400/30 to-transparent mt-6" />
           <p className="mt-6 text-slate-300 max-w-3xl text-sm sm:text-base">
-            Dalle categorie giovanili alle formazioni competitive: ogni gruppo rappresenta identita, impegno e crescita sportiva della Volleyball San Martino.
+            Dalle categorie giovanili alle formazioni competitive: ogni gruppo rappresenta identità, impegno e crescita sportiva della Volleyball San Martino.
           </p>
         </motion.div>
 
@@ -97,7 +97,7 @@ export default function SquadrePage() {
                 <article className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                   <Link href={`/squadre/${slugFromCategoria(topTeam.categoria)}`}>
                     <div className="relative aspect-[16/9] overflow-hidden">
-                      <img
+                      <img fetchPriority="high" decoding="async"
                         src={teamImage(topTeam.id)}
                         alt={`Squadra ${topTeam.categoria}`}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -132,7 +132,7 @@ export default function SquadrePage() {
                   <article key={squadra.id} className="rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                     <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`}>
                       <div className="relative aspect-[16/10] overflow-hidden">
-                        <img
+                        <img loading="lazy" decoding="async"
                           src={teamImage(squadra.id)}
                           alt={`Squadra ${squadra.categoria}`}
                           className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"

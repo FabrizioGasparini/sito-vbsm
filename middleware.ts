@@ -20,10 +20,6 @@ export async function middleware(req: NextRequest) {
     // recupera il token dai cookie
     const token = req.cookies.get("token")?.value;
 
-    if (req.nextUrl.pathname.startsWith("/api")) {
-        return;
-    }
-
     if (req.nextUrl.pathname.startsWith("/manutenzione")) {
         return NextResponse.next();
     }
@@ -46,7 +42,8 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
 }
 
-// solo i percorsi /admin/* devono essere protetti, ma escludi anche api e images
+// Il middleware gira solo dove serve: area riservata, login e Torneo 24H.
+// Le API verificano autonomamente il JWT (lib/auth.ts).
 export const config = {
-    matcher: ["/admin/:path*", "/login", "/api/:path*", "/images/:path*", "/torneo-24h/:path*"],
+    matcher: ["/admin/:path*", "/login", "/torneo-24h/:path*"],
 };

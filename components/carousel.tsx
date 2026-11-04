@@ -62,7 +62,7 @@ export function ArticleCarousel({ immagini, title }: ArticleCarouselProps) {
                             className="flex justify-center items-center transition-[height] duration-300"
                             style={{ height: currentHeight ? `${currentHeight}px` : "auto" }}
                         >
-                            <img
+                            <img loading="lazy" decoding="async"
                                 ref={(el) => { imgRefs.current[idx] = el!; }}
                                 src={img}
                                 alt={`${title} - immagine ${idx + 1}`}

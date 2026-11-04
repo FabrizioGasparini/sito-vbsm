@@ -70,12 +70,12 @@ export default function GalleryPageClient({ slug }: { slug: string }) {
 
     return (
         <div className="min-h-screen bg-background">
-            <Navigation className="bg-transparent absolute" />
+            <Navigation />
 
             {/* ===== HERO HEADER con blur ===== */}
             <section className="relative min-h-96 sm:min-h-112 py-6 mt-1 flex flex-col justify-center items-center text-center text-white overflow-hidden">
-                <img
-                    src={evento.thumbnail || "/placeholder.svg"}
+                <img fetchPriority="high" decoding="async"
+                    src={evento.thumbnail || "/images/placeholder.svg"}
                     alt={evento.titolo}
                     className="h-full w-full object-cover blur-[10px] brightness-[0.5]"
                 />
@@ -125,7 +125,7 @@ export default function GalleryPageClient({ slug }: { slug: string }) {
                                                     }
                                                 }}
                                         >
-                                            <img
+                                            <img loading="lazy" decoding="async"
                                                 src={m.url}
                                                 alt={`foto-${idx}`}
                                                 className="h-full w-full object-cover filter md:grayscale group-hover:grayscale-0 transition-all duration-300"
@@ -196,7 +196,7 @@ export default function GalleryPageClient({ slug }: { slug: string }) {
                         onClick={(e) => e.stopPropagation()} // evita chiusura se clicchi dentro
                     >
                         {selected.tipo === "foto" ? (
-                            <img
+                            <img loading="lazy" decoding="async"
                                 src={selected.url}
                                 alt="Foto ingrandita"
                                 className="w-full max-h-[95vh] object-contain rounded-xl shadow-2xl"

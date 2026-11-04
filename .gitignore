@@ -1,4 +1,26 @@
+# dipendenze
 node_modules
+
+# build Next.js
 .next
+out
+*.tsbuildinfo
+
+# segreti e configurazione locale (usare .env.example come modello)
+.env
+.env.*
+!.env.example
+
+# asset serviti dal server (non versionati)
+public/
+
+# stato runtime
+manutenzione.flag
+
+# log e file di sistema
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
 .well-known
-public

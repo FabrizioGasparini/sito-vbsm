@@ -269,7 +269,7 @@ export default function RegistrazionePage() {
                   </h1>
                   <p className="max-w-2xl text-sm text-white/90 sm:text-base">
                     Compila il modulo con i dati del referente, almeno i giocatori minimi richiesti e la foto del bonifico.
-                    L&apos;iscrizione verra&apos; confermata dopo la verifica manuale via email.
+                    L&apos;iscrizione verrà confermata dopo la verifica manuale via email.
                   </p>
                 </div>
 
@@ -477,7 +477,7 @@ export default function RegistrazionePage() {
                           bonificoPreviewType === "pdf" ? (
                             <iframe src={bonificoPreview} title="Anteprima bonifico PDF" className="h-full w-full" />
                           ) : (
-                            <img src={bonificoPreview} alt="Anteprima bonifico" className="h-full w-full object-cover" />
+                            <img loading="lazy" decoding="async" src={bonificoPreview} alt="Anteprima bonifico" className="h-full w-full object-cover" />
                           )
                         ) : (
                           <div className="flex h-full items-center justify-center text-slate-500">
@@ -506,7 +506,7 @@ export default function RegistrazionePage() {
                   className="mt-1 h-4 w-4 accent-primary"
                 />
                 <span>
-                  Dichiaro di aver letto la <a href="/privacy" className="text-primary underline">privacy policy</a> e di essere autorizzato a trasmettere i dati dei giocatori indicati per la gestione dell'iscrizione.
+                  Dichiaro di aver letto la <a href="/privacy" className="text-primary underline">privacy policy</a> e di essere autorizzato a trasmettere i dati dei giocatori indicati per la gestione dell’iscrizione.
                 </span>
               </label>
 

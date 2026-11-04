@@ -6,6 +6,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
 
     const { committee_id, championship_id } = await params
 
+    if (!/^[0-9]{1,10}$/.test(committee_id) || !/^[0-9]{1,10}$/.test(championship_id)) {
+      return NextResponse.json({ error: "Parametri non validi" }, { status: 400 })
+    }
+
     const matches = await fetch(`https://app.fipavonline.it/api/v1/calendar/${committee_id}/${championship_id}`).then(
       res => res.json().then(data => data.data.matches.filter((match: Match) => match["team1"]["cod_aff_societa"] === "080410047" || match["team2"]["cod_aff_societa"] === "080410047").map((match: Match) => {
         const totalSets = (parseInt(match["team1-setwin"] || "0") + parseInt(match["team2-setwin"] || "0"));

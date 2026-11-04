@@ -1,9 +1,28 @@
-import js from "@eslint/js";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
 import globals from "globals";
-import tseslint from "typescript-eslint";
-import { defineConfig } from "eslint/config";
 
-export default defineConfig([
-  { files: ["**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js }, extends: ["js/recommended"], languageOptions: { globals: globals.browser } },
-  tseslint.configs.recommended,
-]);
+const compat = new FlatCompat({ baseDirectory: dirname(fileURLToPath(import.meta.url)) });
+
+const config = [
+  {
+    ignores: [".next/**", "node_modules/**", "public/**", "next-env.d.ts", "app/admin/matches/page.txt"],
+  },
+  // Regole ufficiali Next.js (React, hooks, Core Web Vitals) + TypeScript
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    rules: {
+      // Le immagini sono servite da una cartella esterna con percorsi dinamici: <img> è una scelta voluta
+      "@next/next/no-img-element": "off",
+    },
+  },
+  {
+    // Script Node.js di supporto (deploy, compressione immagini, configurazione)
+    files: ["*.js", "*.mjs"],
+    languageOptions: { globals: globals.node },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+];
+
+export default config;

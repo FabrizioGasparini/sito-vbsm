@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "./prisma";
 
 export interface NewsArticle {
@@ -21,7 +22,7 @@ export const emptyArticle: Omit<NewsArticle, "id"> = {
   categoria: "Risultati",
   data: "",
   autore: "VBSM",
-  immagine: "/volleyball-game.png",
+  immagine: "/images/placeholder.svg",
   immagini: [],
   estratto: "",
   contenuto: "",
@@ -29,44 +30,55 @@ export const emptyArticle: Omit<NewsArticle, "id"> = {
   featured: false,
 };
 
+type NewsRow = Awaited<ReturnType<typeof prisma.news.findFirst>> & {};
+
+function parseJsonArray(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+// Data nel fuso orario italiano (YYYY-MM-DD): con toISOString() gli articoli
+// salvati a mezzanotte ora italiana risultavano del giorno precedente.
+const romeDate = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Rome" });
+
+function toArticle(row: NewsRow): NewsArticle {
+  return {
+    ...row,
+    autore: row.autore ?? "",
+    immagine: row.immagine ?? "",
+    estratto: row.estratto ?? "",
+    contenuto: row.contenuto ?? "",
+    featured: row.featured ?? false,
+    immagini: parseJsonArray(row.immagini),
+    tags: parseJsonArray(row.tags),
+    data: romeDate.format(row.data),
+  };
+}
+
 // Recupera tutti gli articoli
 export async function getNewsData(): Promise<NewsArticle[]> {
   const rows = await prisma.news.findMany({
     orderBy: { data: "desc" }
   });
-
-  return rows.map((row) => ({
-    ...row,
-    immagini: row.immagini ? JSON.parse(row.immagini) : [],
-    tags: row.tags ? JSON.parse(row.tags) : [],
-    data: row.data.toISOString().split("T")[0],
-  } as NewsArticle));
+  return rows.map(toArticle);
 }
 
 // Recupera un articolo per ID
 export async function getNewsById(id: number): Promise<NewsArticle | undefined> {
   const article = await prisma.news.findUnique({ where: { id } });
-  if (!article) return undefined;
-  return {
-    ...article,
-    immagini: article.immagini ? JSON.parse(article.immagini) : [],
-    tags: article.tags ? JSON.parse(article.tags) : [],
-    data: article.data.toISOString().split("T")[0],
-  } as NewsArticle;
+  return article ? toArticle(article) : undefined;
 }
 
-// Recupera un articolo per slug
-export async function getNewsBySlug(slug: string): Promise<NewsArticle | undefined> {
+// Recupera un articolo per slug (memorizzato per richiesta: usato sia da generateMetadata sia dalla pagina)
+export const getNewsBySlug = cache(async (slug: string): Promise<NewsArticle | undefined> => {
   const article = await prisma.news.findUnique({ where: { slug } });
-  console.log(article)
-  if (!article) return undefined;
-  return {
-    ...article,
-    immagini: article.immagini ? JSON.parse(article.immagini) : [],
-    tags: article.tags ? JSON.parse(article.tags) : [],
-    data: article.data.toISOString().split("T")[0],
-  } as NewsArticle;
-}
+  return article ? toArticle(article) : undefined;
+});
 
 // Articoli in evidenza
 export async function getFeaturedNews(): Promise<NewsArticle[]> {
@@ -76,8 +88,8 @@ export async function getFeaturedNews(): Promise<NewsArticle[]> {
 
 // Ultimi articoli
 export async function getLatestNews(limit = 6): Promise<NewsArticle[]> {
-  const articles = await getNewsData();
-  return articles.slice(0, limit);
+  const rows = await prisma.news.findMany({ orderBy: { data: "desc" }, take: limit });
+  return rows.map(toArticle);
 }
 
 // Articoli per categoria

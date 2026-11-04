@@ -19,6 +19,8 @@ import { Badge } from "@/components/ui/badge"
 import { NewsArticle } from "@/lib/news-data"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import { normalizeImageSrc } from "@/lib/utils"
+import { FOUNDING_YEAR } from "@/lib/site"
 
 interface HomeClientProps {
     latestNews: NewsArticle[]
@@ -37,8 +39,11 @@ const legacyStats = [
     { value: "1984", label: "Fondazione", icon: Calendar },
     { value: "19", label: "Squadre", icon: Shield },
     { value: "300+", label: "Atleti", icon: Users },
-    { value: "41", label: "Anni di storia", icon: Activity },
+    // Calcolato: il valore fisso "41" diventava errato ogni anno
+    { value: String(new Date().getFullYear() - FOUNDING_YEAR), label: "Anni di storia", icon: Activity },
 ]
+
+const newsImage = (value: string) => normalizeImageSrc(value) || "/images/placeholder.svg"
 
 export function HomeClient({ latestNews }: HomeClientProps) {
     const targetRef = useRef<HTMLDivElement>(null)
@@ -61,7 +66,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                 text + CTAs bottom-left, inset collage photo + caption bottom-right */}
             <section ref={targetRef} className="relative min-h-screen overflow-hidden">
                 <motion.div style={{ opacity, scale, y }} className="absolute inset-0 z-0">
-                    <img
+                    <img fetchPriority="high" decoding="async"
                         src="/images/2025-26/pages/societa.webp"
                         alt="Volleyball San Martino"
                         className="h-full w-full object-cover brightness-[0.6]"
@@ -73,7 +78,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                     {/* Headline block — upper area, left-aligned, huge */}
                     <div className="px-4 sm:px-6 lg:px-8">
                         <motion.div
-                            initial={{ opacity: 0, y: 40 }}
+                            initial={{ opacity: 1, y: 24 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: 0.2 }}
                             className="max-w-6xl"
@@ -85,7 +90,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                                 Dal 1984
                             </Badge>
 
-                            <h1 className="font-ethnocentric text-[13vw] sm:text-7xl lg:text-8xl leading-[0.92] text-white tracking-tight drop-shadow-2xl">
+                            <h1 className="font-ethnocentric text-[min(calc((100vw-2rem)/9.6),6rem)] leading-[0.92] text-white tracking-tight drop-shadow-2xl">
                                 VOLLEYBALL
                                 <span className="block text-primary">SAN MARTINO</span>
                             </h1>
@@ -94,7 +99,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
 
                     {/* Bottom split — copy + CTAs (left) / inset photo + caption (right) */}
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 1, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.5 }}
                         className="px-4 sm:px-6 lg:px-8 mt-10"
@@ -124,7 +129,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                                     Un nuovo modo di vivere lo sport, la squadra e la community VBSM.
                                 </p>
                                 <div className="relative w-34 h-32 lg:w-44 lg:h-44">
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src="/images/loghi/main.webp"
                                         alt="Volleyball San Martino"
                                         className="h-full w-full object-fill p-1"
@@ -137,9 +142,10 @@ export function HomeClient({ latestNews }: HomeClientProps) {
             </section>
 
             {/* Ticker strip */}
-            <div className="relative z-20 bg-primary text-primary-foreground overflow-hidden border-y border-black/10">
+            {/* Decorativo: le stesse informazioni sono presenti nella sezione statistiche */}
+            <div aria-hidden="true" className="relative z-20 bg-primary text-primary-foreground overflow-hidden border-y border-black/10">
                 <div className="flex whitespace-nowrap py-3 animate-marquee">
-                    {[...tickerItems, ...tickerItems, ...tickerItems].map((item, i) => (
+                    {[...tickerItems, ...tickerItems].map((item, i) => (
                         <span
                             key={i}
                             className="mx-4 text-sm md:text-base font-bold uppercase tracking-[0.2em] flex items-center gap-4"
@@ -234,8 +240,8 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                             >
                                 <Link href={`/news/${heroNews.slug}`} className="group block h-full">
                                     <div className="relative h-[22rem] md:h-[28rem] rounded-3xl overflow-hidden">
-                                        <img
-                                            src={"/images" + heroNews.immagine || "/images/placeholder.jpg"}
+                                        <img loading="lazy" decoding="async"
+                                            src={newsImage(heroNews.immagine)}
                                             alt={heroNews.titolo}
                                             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
@@ -277,8 +283,8 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                                     >
                                         <Link href={`/news/${news.slug}`} className="group flex h-full gap-4 bg-card rounded-2xl overflow-hidden border border-border p-3 hover:shadow-xl transition-all">
                                             <div className="relative w-28 sm:w-36 shrink-0 rounded-xl overflow-hidden">
-                                                <img
-                                                    src={"/images" + news.immagine || "/images/placeholder.jpg"}
+                                                <img loading="lazy" decoding="async"
+                                                    src={newsImage(news.immagine)}
                                                     alt={news.titolo}
                                                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />
@@ -301,6 +307,13 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                         </div>
                     )}
 
+                    {latestNews.length === 0 && (
+                        <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center">
+                            <p className="text-lg font-semibold">Nessuna news disponibile al momento.</p>
+                            <p className="mt-2 text-muted-foreground">Seguici sui social per restare aggiornato sulle attività della società.</p>
+                        </div>
+                    )}
+
                     <div className="mt-8 text-center md:hidden">
                         <Button variant="outline" className="w-full" asChild>
                             <Link href="/news">Vedi tutte le news</Link>
@@ -312,10 +325,9 @@ export function HomeClient({ latestNews }: HomeClientProps) {
             {/* Call to Action — layered with oversized background wordmark */}
             <section className="relative py-32 overflow-hidden">
                 <div className="absolute inset-0 bg-primary">
-                    <div className="absolute inset-0 bg-[url('/images/pattern.png')] opacity-10" />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
                 </div>
-                <span className="pointer-events-none select-none absolute -bottom-6 left-1/2 -translate-x-1/2 font-ethnocentric text-white/10 text-[18vw] whitespace-nowrap leading-none">
+                <span aria-hidden="true" className="pointer-events-none select-none absolute -bottom-6 left-1/2 -translate-x-1/2 font-ethnocentric text-white/10 text-[18vw] whitespace-nowrap leading-none">
                     SAN MARTINO
                 </span>
                 <div className="container mx-auto px-4 relative z-10">
@@ -327,7 +339,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                             ENTRA IN SQUADRA
                         </h2>
                         <p className="text-xl text-white/90 mb-8 leading-relaxed">
-                            Che tu sia un atleta esperto o alle prime armi, c'è posto per te nella famiglia Volleyball San Martino.
+                            Che tu sia un atleta esperto o alle prime armi, c’è posto per te nella famiglia Volleyball San Martino.
                             Vieni a provare gratuitamente!
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
@@ -347,7 +359,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
             </section>
 
             {/* Closing giant wordmark strip */}
-            <div className="relative bg-black overflow-hidden border-t border-white/5 py-6">
+            <div aria-hidden="true" className="relative bg-black overflow-hidden border-t border-white/5 py-6">
                 <div className="flex whitespace-nowrap animate-marquee">
                     {Array.from({ length: 6 }).map((_, i) => (
                         <span

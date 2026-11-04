@@ -41,6 +41,7 @@ export default function ContattiPage() {
     messaggio: "",
   })
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
+  const [formStatus, setFormStatus] = useState<{ type: "error" | "success"; message: string } | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -54,6 +55,11 @@ export default function ContattiPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!privacyAccepted) return
+    if (!formData.oggetto) {
+      setFormStatus({ type: "error", message: "Seleziona l'oggetto del messaggio." })
+      document.getElementById("oggetto")?.focus()
+      return
+    }
     // resetta il form
     setFormData({
       nome: "",
@@ -77,6 +83,10 @@ export default function ContattiPage() {
 
     const mailto = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
     window.location.href = mailto
+    setFormStatus({
+      type: "success",
+      message: `Abbiamo aperto il tuo programma di posta con il messaggio già compilato: premi "Invia" per completare. Se non si è aperto, scrivici direttamente a ${recipient}.`,
+    })
   }
 
   return (
@@ -96,7 +106,7 @@ export default function ContattiPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center space-y-6">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
@@ -219,7 +229,7 @@ export default function ContattiPage() {
                   <div className="space-y-2">
                     <Label htmlFor="oggetto">Oggetto *</Label>
                     <Select value={formData.oggetto} onValueChange={handleSelectChange} >
-                      <SelectTrigger className="bg-secondary w-full">
+                      <SelectTrigger id="oggetto" aria-required="true" className="bg-secondary w-full">
                         <SelectValue placeholder="Seleziona l'oggetto" />
                       </SelectTrigger>
                       <SelectContent className="bg-secondary">
@@ -259,6 +269,13 @@ export default function ContattiPage() {
                     Dichiaro di aver letto la <a href="/privacy" className="text-primary underline">privacy policy</a> e acconsento al trattamento dei dati necessari per rispondere alla richiesta.
                   </span>
                 </label>
+                <div role="status" aria-live="polite">
+                  {formStatus && (
+                    <p className={formStatus.type === "error" ? "rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive" : "rounded-md border border-green-600/30 bg-green-600/10 p-3 text-sm text-green-800"}>
+                      {formStatus.message}
+                    </p>
+                  )}
+                </div>
                 <div className="text-center">
                   <Button type="submit" size="lg" className="w-full md:w-auto">
                     Invia Messaggio
@@ -373,7 +390,7 @@ export default function ContattiPage() {
               <CardContent>
                 <p className="text-muted-foreground">
                   No, accogliamo atleti di tutti i livelli. Abbiamo programmi specifici per principianti e i nostri
-                  allenatori sono specializzati nell'insegnamento delle basi della pallavolo.
+                  allenatori sono specializzati nell’insegnamento delle basi della pallavolo.
                 </p>
               </CardContent>
             </Card>

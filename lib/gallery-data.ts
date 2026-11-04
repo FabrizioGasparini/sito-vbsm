@@ -71,3 +71,15 @@ export async function getGalleryEvent(id: string): Promise<Gallery | undefined> 
     media: readMediaFiles(evento.media), // 🔹 legge i file dal path
   }
 }
+
+// ---------------- METADATI PER SLUG (senza leggere i file media) ----------------
+export function gallerySlug(titolo: string) {
+  return titolo.replaceAll(" ", "-").toLowerCase()
+}
+
+export async function findGalleryMetaBySlug(slug: string) {
+  const rows = await prisma.gallery.findMany({
+    select: { id: true, titolo: true, evento: true, data: true, thumbnail: true },
+  })
+  return rows.find((row) => String(row.id) === slug || gallerySlug(row.titolo) === slug)
+}

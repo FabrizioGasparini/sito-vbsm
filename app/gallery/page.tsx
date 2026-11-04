@@ -43,7 +43,7 @@ export default function GalleriesPage() {
             {/* Hero Section */}
             <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
-                    <img
+                    <img fetchPriority="high" decoding="async"
                         src="/images/2025-26/pages/societa.webp"
                         alt="Gallery Hero"
                         className="h-full w-full object-cover brightness-[0.3]"
@@ -53,7 +53,7 @@ export default function GalleriesPage() {
 
                 <div className="relative z-10 container mx-auto px-4 text-center">
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 1, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8 }}
                     >
@@ -94,8 +94,8 @@ export default function GalleriesPage() {
                                 <Link href={`/gallery/${ev.titolo.replaceAll(" ", "-").toLowerCase()}`}>
                                     <div className="group relative cursor-pointer">
                                         <div className="relative h-80 w-full overflow-hidden rounded-3xl border border-white/10 bg-card shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
-                                            <img
-                                                src={ev.thumbnail || "/images/placeholder.jpg"}
+                                            <img loading="lazy" decoding="async"
+                                                src={ev.thumbnail || "/images/placeholder.svg"}
                                                 alt={ev.titolo}
                                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />

@@ -140,7 +140,7 @@ export default function SponsorPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center space-y-6">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
@@ -174,7 +174,7 @@ export default function SponsorPage() {
             {sponsorPrincipali.map((sponsor, index) => (
               <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="relative">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={`/images/2025-26/sponsors/${sponsor.logo}`}
                     alt={`Logo ${sponsor.nome}`}
                     className="w-full h-32 object-contain bg-muted/30 p-4"

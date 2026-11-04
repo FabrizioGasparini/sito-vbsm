@@ -20,7 +20,7 @@ const emptyArticle: Omit<NewsArticle, "id"> = {
   categoria: "Risultati",
   data: new Date().toISOString(),
   autore: "Redazione VSM",
-  immagine: "/volleyball-game.png",
+  immagine: "/images/placeholder.svg",
   immagini: [],
   estratto: "",
   contenuto: "",
@@ -104,7 +104,14 @@ export async function PUT(req: NextRequest) {
     const updated = await prisma.news.update({
       where: { id: Number(id) },
       data: {
-        ...rest,
+        // Solo i campi previsti: evita che il body sovrascriva colonne arbitrarie
+        slug: rest.slug,
+        titolo: rest.titolo,
+        categoria: rest.categoria,
+        autore: rest.autore,
+        estratto: rest.estratto,
+        contenuto: rest.contenuto,
+        featured: rest.featured ?? false,
         data: new Date(rest.data),
         immagine: rest.immagine || inlineImageUrls[0] || emptyArticle.immagine,
         immagini: JSON.stringify(mergedImages),

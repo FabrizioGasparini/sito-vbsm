@@ -22,11 +22,13 @@ export function getAuthContext(req: NextRequest): AuthContext {
         if (!token || !jwtSecret) return { authenticated: false, username: null, role: null };
 
         try {
-            const payload = jwt.verify(token, jwtSecret) as AuthPayload;
+            const payload = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as AuthPayload;
+            // Nessun ruolo implicito: solo i ruoli noti concedono permessi
+            const role: AuthRole | null = payload.role === "admin" || payload.role === "viewer" ? payload.role : null
             return {
-                authenticated: true,
+                authenticated: role !== null,
                 username: payload.username ?? null,
-                role: payload.role ?? "admin",
+                role,
             }
         } catch {
             return { authenticated: false, username: null, role: null }

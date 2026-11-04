@@ -31,7 +31,9 @@ export default function NewsPage() {
       setIsLoading(true)
       try {
         const response = await fetch("/api/news");
-        const data: NewsArticle[] = await response.json();
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const payload: unknown = await response.json();
+        const data: NewsArticle[] = Array.isArray(payload) ? payload : [];
         const categories = ["Tutte", ...new Set(data.map((article) => article.categoria))];
         setCategorie(categories);
         setAllNews(data);
@@ -47,8 +49,10 @@ export default function NewsPage() {
 
   const filteredNews = allNews.filter(article => {
     const matchesCategory = categoriaFiltro === "Tutte" || article.categoria === categoriaFiltro
-    const matchesSearch = article.titolo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.estratto.toLowerCase().includes(searchQuery.toLowerCase())
+    const query = searchQuery.trim().toLowerCase()
+    const matchesSearch = !query ||
+      (article.titolo || "").toLowerCase().includes(query) ||
+      (article.estratto || "").toLowerCase().includes(query)
     return matchesCategory && matchesSearch
   })
 
@@ -127,7 +131,8 @@ export default function NewsPage() {
 
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,72,0.17),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(59,130,246,0.12),transparent_30%),linear-gradient(180deg,#06090e_0%,#030508_100%)]" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16" aria-busy={isLoading}>
+        <h1 className="sr-only">News Volleyball San Martino</h1>
         {isLoading ? (
           <div className="space-y-12">
             <Skeleton className="h-[420px] w-full rounded-2xl bg-white/10" />
@@ -152,7 +157,7 @@ export default function NewsPage() {
                   className="relative overflow-hidden rounded-2xl border border-white/10 mb-6"
                 >
                   <div className="absolute inset-0">
-                    <img
+                    <img fetchPriority="high" decoding="async"
                       src={getImagePath(heroArticle.immagine)}
                       data-image-path={normalizeImageSrc(heroArticle.immagine) || "/images/placeholder.svg"}
                       alt={heroArticle.titolo}
@@ -166,11 +171,11 @@ export default function NewsPage() {
                   <div className="relative z-10 px-6 py-10 sm:p-10 lg:p-14 min-h-[360px] lg:min-h-[430px] flex flex-col justify-end">
                     <div className="max-w-3xl space-y-4">
                       <Badge className="bg-red-600 text-white hover:bg-red-500 uppercase tracking-[0.18em] text-[10px] font-semibold">
-                        Breaking News
+                        In evidenza
                       </Badge>
-                      <h1 className="font-ethnocentric text-3xl leading-[1.04] sm:text-4xl lg:text-6xl uppercase text-white drop-shadow-xl">
+                      <h2 className="font-ethnocentric text-3xl leading-[1.04] sm:text-4xl lg:text-6xl uppercase text-white drop-shadow-xl">
                         {heroArticle.titolo}
-                      </h1>
+                      </h2>
                       <p className="text-slate-200/90 text-sm sm:text-base max-w-2xl line-clamp-3">
                         {heroArticle.estratto}
                       </p>
@@ -216,10 +221,11 @@ export default function NewsPage() {
                     </div>
 
                     <div className="relative w-full md:w-72">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
                         type="search"
-                        placeholder="Search News..."
+                        aria-label="Cerca tra le news"
+                        placeholder="Cerca nelle news..."
                         className="pl-9 bg-black/25 border-white/15 text-slate-200 placeholder:text-slate-500"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -240,7 +246,7 @@ export default function NewsPage() {
                         <article className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                           <Link href={`/news/${editorialLead.slug}`}>
                             <div className="relative aspect-[16/9] overflow-hidden">
-                              <img
+                              <img loading="lazy" decoding="async"
                                 src={getImagePath(editorialLead.immagine)}
                                 data-image-path={normalizeImageSrc(editorialLead.immagine) || "/images/placeholder.svg"}
                                 alt={editorialLead.titolo}
@@ -264,7 +270,7 @@ export default function NewsPage() {
                           <article key={articolo.id} className="rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                             <Link href={`/news/${articolo.slug}`}>
                               <div className="relative aspect-[16/11] overflow-hidden">
-                                <img
+                                <img loading="lazy" decoding="async"
                                   src={getImagePath(articolo.immagine)}
                                   data-image-path={normalizeImageSrc(articolo.immagine) || "/images/placeholder.svg"}
                                   alt={articolo.titolo}
@@ -319,7 +325,7 @@ export default function NewsPage() {
                               <article key={articolo.id} className="rounded-2xl overflow-hidden border border-blue-300/15 bg-[#071321] group shadow-lg shadow-black/10">
                                 <Link href={`/news/${articolo.slug}`}>
                                   <div className="relative aspect-[16/10] overflow-hidden">
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                       src={getImagePath(articolo.immagine)}
                                       data-image-path={normalizeImageSrc(articolo.immagine) || "/images/placeholder.svg"}
                                       alt={articolo.titolo}

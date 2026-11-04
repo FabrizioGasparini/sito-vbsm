@@ -51,7 +51,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
             }}
         >
             {thumbnail ? (
-                <img
+                <img loading="lazy" decoding="async"
                     src={thumbnail}
                     alt="Miniatura video"
                     style={{

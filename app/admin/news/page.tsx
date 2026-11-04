@@ -39,7 +39,7 @@ const emptyArticle: LocalArticle = {
   categoria: "Risultati",
   data: "",
   autore: "Redazione VSM",
-  immagine: "/placeholder-image.jpg",
+  immagine: "/images/placeholder.svg",
   immagini: [],
   estratto: "",
   contenuto: "",
@@ -325,7 +325,7 @@ export default function AdminNewsPage() {
         const url = imgMatch[2] || ""
         elements.push(
           <div key={`img-${i}`} className="mb-3">
-            <img src={normalizeImageSrc(url.replaceAll("//", "/"))} alt={alt}
+            <img loading="lazy" decoding="async" src={normalizeImageSrc(url.replaceAll("//", "/"))} alt={alt}
               className="w-full h-auto object-cover rounded-lg shadow-lg" />
           </div>
         )
@@ -361,7 +361,7 @@ export default function AdminNewsPage() {
       const url = match[2]
 
       parts.push(
-        <img
+        <img loading="lazy" decoding="async"
           key={`inline-img-${idx}`}
           src={normalizeImageSrc(url.replaceAll("//", "/"))}
           alt={alt}
@@ -585,7 +585,7 @@ export default function AdminNewsPage() {
       const newArticle: NewsArticle = {
         ...(formData as LocalArticle),
         immagini: persistedImages,
-        immagine: formData.immagine || inlineImages[0] || "/volleyball-game.png",
+        immagine: formData.immagine || inlineImages[0] || "/images/placeholder.svg",
         id: newId,
         slug,
         data: formData.data || new Date().toISOString().slice(0, 10),
@@ -604,7 +604,7 @@ export default function AdminNewsPage() {
       const updatedArticle: NewsArticle = {
         ...(formData as Omit<NewsArticle, "id">),
         immagini: persistedImages,
-        immagine: formData.immagine || inlineImages[0] || "/volleyball-game.png",
+        immagine: formData.immagine || inlineImages[0] || "/images/placeholder.svg",
         id: editingArticle.id,
         slug,
         data: formData.data ? new Date(formData.data).toISOString().slice(0, 19).replace("T", " ") : editingArticle.data,
@@ -908,7 +908,7 @@ export default function AdminNewsPage() {
                         onDragOver={onDragOver}
                         className="relative border rounded overflow-hidden"
                       >
-                        <img src={normalizeImageSrc(img)} alt={`img-${idx}`}
+                        <img loading="lazy" decoding="async" src={normalizeImageSrc(img)} alt={`img-${idx}`}
                           className="w-full h-auto object-cover rounded-lg shadow-lg" />
                         <div className="absolute top-2 right-2 flex gap-1">
                           <button onClick={() => removeImageAt(idx)} className="bg-white/80 p-1 rounded text-destructive">✕</button>
@@ -933,7 +933,7 @@ export default function AdminNewsPage() {
                     {formData.immagini && formData.immagini.length > 0 && (
                       <div className="relative">
                         <div className="w-full h-64 rounded overflow-hidden">
-                          <img src={normalizeImageSrc(formData.immagini[carouselIndex].replaceAll("//", "/"))} alt={`slide-${carouselIndex}`}
+                          <img loading="lazy" decoding="async" src={normalizeImageSrc(formData.immagini[carouselIndex].replaceAll("//", "/"))} alt={`slide-${carouselIndex}`}
                             className="w-full h-auto object-cover rounded-lg shadow-lg" />
                         </div>
                         <div className="absolute inset-y-0 left-2 flex items-center">
@@ -945,7 +945,7 @@ export default function AdminNewsPage() {
                         <div className="flex gap-2 mt-2">
                           {formData.immagini.map((_, i) => (
                             <button key={i} onClick={() => setCarouselIndex(i)} className={`w-8 h-8 rounded ${i === carouselIndex ? "ring-2 ring-offset-1" : ""}`}>
-                              <img src={normalizeImageSrc(formData.immagini[i].replaceAll("//", "/"))} alt={`thumb-${i}`}
+                              <img loading="lazy" decoding="async" src={normalizeImageSrc(formData.immagini[i].replaceAll("//", "/"))} alt={`thumb-${i}`}
                                 className="w-full h-auto object-cover rounded-lg shadow-lg" />
                             </button>
                           ))}
@@ -957,7 +957,7 @@ export default function AdminNewsPage() {
                     {(!formData.immagini || formData.immagini.length === 0) && extractInlineImages(formData.contenuto || "").length > 0 && (
                       <div className="space-y-2">
                         {extractInlineImages(formData.contenuto).map((im, i) => (
-                          <img key={i} src={normalizeImageSrc(im.url.replaceAll("//", "/"))} alt={im.alt}
+                          <img loading="lazy" decoding="async" key={i} src={normalizeImageSrc(im.url.replaceAll("//", "/"))} alt={im.alt}
                             className="w-full h-auto object-cover rounded-lg shadow-lg" />
                         ))}
                       </div>
@@ -1232,7 +1232,7 @@ export default function AdminNewsPage() {
 
                   <div className="flex items-center gap-2 ml-4">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/news/${article.slug}`} target="_blank">
+                      <Link href={`/news/${article.slug}`} target="_blank" rel="noopener noreferrer">
                         <Eye className="h-4 w-4" />
                       </Link>
                     </Button>

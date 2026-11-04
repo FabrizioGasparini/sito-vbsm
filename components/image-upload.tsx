@@ -72,8 +72,8 @@ export function ImageUpload({ value, onChange, label = "Immagine" }: ImageUpload
   }
 
   const getPreviewSrc = () => {
-    if (!value) return "/images/placeholder.jpg"
-    return normalizeImageSrc(value) || "/images/placeholder.jpg"
+    if (!value) return "/images/placeholder.svg"
+    return normalizeImageSrc(value) || "/images/placeholder.svg"
   }
 
   const inputValue = (() => {
@@ -123,8 +123,8 @@ export function ImageUpload({ value, onChange, label = "Immagine" }: ImageUpload
         <div className="space-y-2">
           <Label className="text-sm text-muted-foreground">Anteprima</Label>
           <div className="relative aspect-[2/1] w-full max-h-48 border rounded-lg overflow-hidden bg-muted">
-            <img
-              src={getPreviewSrc() || "/images/placeholder.jpg"}
+            <img loading="lazy" decoding="async"
+              src={getPreviewSrc() || "/images/placeholder.svg"}
               alt="Anteprima"
               className="h-full w-full object-cover"
             />

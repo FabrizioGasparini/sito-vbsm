@@ -10,9 +10,29 @@ import { Calendar, User, ArrowLeft } from "lucide-react"
 import { ArticleCarousel } from "@/components/carousel"
 import { Separator } from "@/components/ui/separator"
 import { normalizeImageSrc } from "@/lib/utils"
+import type { Metadata } from "next"
+import { pageMetadata, toDescription } from "@/lib/seo"
+import { SITE_NAME, LOGO_IMAGE, absoluteUrl } from "@/lib/site"
 
 interface NewsArticlePageProps {
   params: Promise<{ slug: string }>
+}
+
+export async function generateMetadata({ params }: NewsArticlePageProps): Promise<Metadata> {
+  const { slug } = await params
+  const article = await getNewsBySlug(slug)
+  if (!article) {
+    return pageMetadata({ title: "Articolo non trovato", description: "L'articolo richiesto non è disponibile.", path: `/news/${slug}`, noIndex: true })
+  }
+  const image = normalizeImageSrc(article.immagine)
+  return pageMetadata({
+    title: article.titolo,
+    description: toDescription(article.estratto || article.contenuto, `${article.categoria} - ${SITE_NAME}`),
+    path: `/news/${article.slug}`,
+    image: image && !image.endsWith("placeholder.svg") ? image : null,
+    type: "article",
+    publishedTime: article.data,
+  })
 }
 
 export default async function NewsArticlePage({ params }: NewsArticlePageProps) {
@@ -59,7 +79,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       const url = match[2]
       parts.push(
         <span key={`inline-img-${idx}`} className="relative inline-block h-40 w-64 mx-2 align-middle rounded-lg overflow-hidden shadow-md">
-          <img
+          <img loading="lazy" decoding="async"
             src={normalizeImageSrc(url)}
             alt={alt}
             className="h-full w-full object-cover"
@@ -127,11 +147,12 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       }
 
       if (line.startsWith("# ")) {
-        elements.push(<h1 key={i} className="text-3xl md:text-4xl font-bold mt-12 mb-6 text-foreground">{line.replace(/^#\s+/, "")}</h1>)
+        // Il titolo dell'articolo è l'unico <h1> della pagina: i titoli nel testo partono da <h2>
+        elements.push(<h2 key={i} className="text-3xl md:text-4xl font-bold mt-12 mb-6 text-foreground">{line.replace(/^#\s+/, "")}</h2>)
         continue
       }
       if (line.startsWith("## ")) {
-        elements.push(<h2 key={i} className="text-2xl md:text-3xl font-semibold mt-10 mb-4 text-foreground">{line.replace(/^##\s+/, "")}</h2>)
+        elements.push(<h3 key={i} className="text-2xl md:text-3xl font-semibold mt-10 mb-4 text-foreground">{line.replace(/^##\s+/, "")}</h3>)
         continue
       }
 
@@ -250,7 +271,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
       if (imgMatch) {
         elements.push(
           <div key={`img-${i}`} className="my-8 w-full relative rounded-xl overflow-hidden shadow-xl">
-            <img
+            <img loading="lazy" decoding="async"
               src={normalizeImageSrc(imgMatch[2].replaceAll("//", "/"))}
               alt={imgMatch[1]}
               className="w-full h-auto object-cover"
@@ -275,14 +296,32 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
     return elements
   }
 
+  const heroImage = normalizeImageSrc(article.immagine) || "/images/placeholder.svg"
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: article.titolo,
+    description: article.estratto || undefined,
+    datePublished: article.data,
+    image: [absoluteUrl(heroImage)],
+    author: { "@type": "Organization", name: article.autore || SITE_NAME },
+    publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: absoluteUrl(LOGO_IMAGE) } },
+    mainEntityOfPage: absoluteUrl(`/news/${article.slug}`),
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, "\\u003c") }}
+      />
       <Navigation />
 
       {/* Hero Section */}
       <div className="relative w-full min-h-[500px] md:min-h-[600px] lg:min-h-[650px] flex items-end pt-28 sm:pt-32 md:pt-36 lg:pt-40">
         <div className="absolute inset-0">
-          <img
+          <img fetchPriority="high" decoding="async"
             src={normalizeImageSrc(article.immagine) || "/images/placeholder.svg"}
             alt={article.titolo}
             className="h-full w-full object-cover"
@@ -360,7 +399,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
             
             <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-primary prose-img:rounded-xl prose-img:shadow-xl">
               <div className="my-8 w-full relative rounded-xl overflow-hidden shadow-xl">
-                <img
+                <img loading="lazy" decoding="async"
                   src={normalizeImageSrc(article.immagine || "/images/placeholder.svg")}
                   alt={article.titolo}
                   className="w-full h-auto object-cover"
@@ -403,7 +442,7 @@ export default async function NewsArticlePage({ params }: NewsArticlePageProps) 
                 <Card key={news.id} className="group hover:shadow-xl transition-all duration-300 border-none bg-card overflow-hidden h-full flex flex-col">
                   <Link href={`/news/${news.slug}`} className="flex flex-col h-full">
                     <div className="relative overflow-hidden w-full aspect-video">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={normalizeImageSrc(news.immagine) || "/images/placeholder.svg"}
                         alt={news.titolo}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"

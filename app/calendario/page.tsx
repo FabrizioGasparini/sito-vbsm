@@ -505,7 +505,7 @@ export default function CalendarioPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center space-y-6">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 1, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
@@ -522,7 +522,7 @@ export default function CalendarioPage() {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="text-xl text-primary-foreground/90 max-w-2xl mx-auto text-pretty font-light"
             >
-              Segui tutte le partite delle nostre squadre e vivi l'emozione del Volleyball San Martino
+              Segui tutte le partite delle nostre squadre e vivi l’emozione del Volleyball San Martino
             </motion.p>
           </div>
         </div>

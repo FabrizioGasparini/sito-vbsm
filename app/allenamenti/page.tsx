@@ -457,7 +457,7 @@ export default function AllenamentiPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="font-ethnocentric text-3xl lg:text-4xl mb-4 text-primary">CALENDARIO SETTIMANALE</h2>
-            <p className="text-lg text-muted-foreground">Vista d'insieme di tutti gli allenamenti della settimana divisi per palestra</p>
+            <p className="text-lg text-muted-foreground">Vista d’insieme di tutti gli allenamenti della settimana divisi per palestra</p>
           </div>
 
           <div className="overflow-x-auto">

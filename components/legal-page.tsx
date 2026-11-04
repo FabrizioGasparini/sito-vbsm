@@ -31,7 +31,7 @@ export function LegalPage({ title, intro, sections }: { title: string; intro: st
           <Link href="/cookies" className="text-primary hover:underline">Cookie policy</Link>
           <Link href="/termini" className="text-primary hover:underline">Termini di servizio</Link>
           <Link href="/note-legali" className="text-primary hover:underline">Note legali</Link>
-          <Link href="/accessibilita" className="text-primary hover:underline">Accessibilita</Link>
+          <Link href="/accessibilita" className="text-primary hover:underline">Accessibilità</Link>
         </nav>
       </main>
       <Footer />

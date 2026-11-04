@@ -341,14 +341,14 @@ export default function AdminSquadrePage() {
                       onClick={() => setSelectedTeamId(team.id)}
                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     >
-                      <img
-                        src={team.immagine || `/images/2025-26/squadre/${team.id}/squadra.webp` || "/images/placeholder.jpg"}
+                      <img loading="lazy" decoding="async"
+                        src={team.immagine || `/images/2025-26/squadre/${team.id}/squadra.webp` || "/images/placeholder.svg"}
                         alt={team.categoria}
                         className="h-12 w-12 rounded-xl object-cover"
                         onError={(e) => {
                           const target = e.currentTarget
                           target.onerror = null
-                          target.src = "/images/placeholder.jpg"
+                          target.src = "/images/placeholder.svg"
                         }}
                       />
                       <div className="min-w-0 flex-1">
@@ -382,14 +382,14 @@ export default function AdminSquadrePage() {
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/10">
-                  <img
-                    src={selectedTeam.immagine || `/images/2025-26/squadre/${selectedTeam.id}/squadra.webp` || "/images/placeholder.jpg"}
+                  <img loading="lazy" decoding="async"
+                    src={selectedTeam.immagine || `/images/2025-26/squadre/${selectedTeam.id}/squadra.webp` || "/images/placeholder.svg"}
                     alt={selectedTeam.categoria}
                     className="h-40 w-full object-cover"
                     onError={(e) => {
                       const target = e.currentTarget
                       target.onerror = null
-                      target.src = "/images/placeholder.jpg"
+                      target.src = "/images/placeholder.svg"
                     }}
                   />
                 </div>
@@ -637,14 +637,14 @@ export default function AdminSquadrePage() {
                     {selectedTeam?.players?.map((player) => (
                       <div key={String(player.id ?? `${player.nome}-${player.cognome}`)} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={player.foto || "/images/placeholder.jpg"}
+                          <img loading="lazy" decoding="async"
+                            src={player.foto || "/images/placeholder.svg"}
                             alt={`${player.nome} ${player.cognome}`}
                             className="h-12 w-12 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.currentTarget
                               target.onerror = null
-                              target.src = "/images/placeholder.jpg"
+                              target.src = "/images/placeholder.svg"
                             }}
                           />
                           <div>

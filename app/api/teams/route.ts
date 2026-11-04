@@ -2,10 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// Dati anagrafici sensibili degli atleti (spesso minorenni): visibili solo agli amministratori
+const PRIVATE_PLAYER_FIELDS = ["eta", "altezza", "peso", "nazionalita", "foto"] as const;
+
+function publicPlayers<T extends Record<string, unknown>>(players: T[], admin: boolean) {
+  if (admin) return players;
+  return players.map((player) => {
+    const copy: Record<string, unknown> = { ...player };
+    for (const field of PRIVATE_PLAYER_FIELDS) delete copy[field];
+    return copy;
+  });
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const admin = isAdmin(req);
 
     if (id) {
       const team = await prisma.teams.findUnique({
@@ -26,6 +39,7 @@ export async function GET(req: NextRequest) {
 
       const safeTeam = {
         ...team,
+        players: publicPlayers(team.players, admin),
         team_coaches: team.team_coaches
           .filter((tc) => tc.coaches !== null)
           .map((tc) => ({
@@ -43,6 +57,7 @@ export async function GET(req: NextRequest) {
     }
 
     const teams = await prisma.teams.findMany({
+      orderBy: { idx: "asc" },
       include: {
         players: true,
         team_coaches: {
@@ -55,6 +70,7 @@ export async function GET(req: NextRequest) {
 
     const safeTeams = teams.map((team) => ({
       ...team,
+      players: publicPlayers(team.players, admin),
       team_coaches: team.team_coaches
         .filter((tc) => tc.coaches !== null)
         .map((tc) => ({

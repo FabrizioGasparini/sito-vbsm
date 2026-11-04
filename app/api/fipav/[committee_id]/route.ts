@@ -6,6 +6,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ comm
 
     const { committee_id } = await params;
 
+    if (!/^[0-9]{1,10}$/.test(committee_id)) {
+      return NextResponse.json({ error: "ID comitato non valido" }, { status: 400 });
+    }
+
     const championships = await fetch(`https://app.fipavonline.it/api/v1/calendar/${committee_id}`).then(
       res => res.json().then(data => data.data.map((championship: Championship) => ({
         id: championship.id,

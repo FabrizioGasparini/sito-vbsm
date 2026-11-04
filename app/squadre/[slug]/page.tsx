@@ -287,7 +287,7 @@ export default function TeamPage() {
 
                 <article className="relative rounded-2xl overflow-hidden border border-white/10">
                     <div className="absolute inset-0">
-                        <img src={teamImage(team.id)} alt={team.categoria} className="h-full w-full object-cover" />
+                        <img fetchPriority="high" decoding="async" src={teamImage(team.id)} alt={team.categoria} className="h-full w-full object-cover" />
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/15" />
                     <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/95 to-transparent" />
@@ -330,7 +330,7 @@ export default function TeamPage() {
                     {roster.map((player) => (
                         <article key={player.id} className="group rounded-xl overflow-hidden border border-white/10 bg-[#0b121c]">
                             <div className="relative aspect-[3/4] overflow-hidden">
-                                <img
+                                <img loading="lazy" decoding="async"
                                     src={playerImage(team.id, player.nome, player.cognome)}
                                     alt={`${player.nome} ${player.cognome}`}
                                     className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -367,7 +367,7 @@ export default function TeamPage() {
                         staff.map((member) => (
                             <article key={member.id} className="group rounded-xl overflow-hidden border border-white/10 bg-[#0b121c]">
                                 <div className="relative aspect-[4/5] overflow-hidden">
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src={playerImage(team.id, member.nome, member.cognome)}
                                         alt={`${member.nome} ${member.cognome}`}
                                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"

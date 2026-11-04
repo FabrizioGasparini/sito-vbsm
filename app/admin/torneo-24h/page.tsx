@@ -349,7 +349,7 @@ export default function AdminTorneo24hPage() {
                         </div>
                         {registrationInfo.bonificoUrl && (
                           <Button asChild size="sm" variant="outline" className="rounded-full border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white">
-                            <Link href={registrationInfo.bonificoUrl} download target="_blank">
+                            <Link href={registrationInfo.bonificoUrl} download target="_blank" rel="noopener noreferrer">
                               <Download className="mr-2 h-4 w-4" /> Scarica
                             </Link>
                           </Button>

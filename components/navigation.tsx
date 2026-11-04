@@ -1,12 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X, ShoppingBag } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { SHOP_URL } from "@/lib/site"
 
 const navigationItems = [
   { name: "Home", href: "/" },
@@ -27,13 +29,17 @@ export function Navigation({ className }: { className?: string }) {
   const [isOpen, setIsOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`))
 
   useEffect(() => {
     setMounted(true)
     const handleScroll = () => {
       setScrolled(window.scrollY > 20)
     }
-    window.addEventListener("scroll", handleScroll)
+    handleScroll()
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
@@ -51,31 +57,37 @@ export function Navigation({ className }: { className?: string }) {
 
   useEffect(() => {
     if (!isOpen) return
+    const toggle = menuButtonRef.current
+    // Sposta il focus nel menu all'apertura e lo riporta sul pulsante alla chiusura
+    const focusTimer = window.setTimeout(() => {
+      document.querySelector<HTMLElement>("#mobile-navigation a")?.focus()
+    }, 50)
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsOpen(false)
     }
     window.addEventListener("keydown", closeOnEscape)
-    return () => window.removeEventListener("keydown", closeOnEscape)
+    return () => {
+      window.clearTimeout(focusTimer)
+      window.removeEventListener("keydown", closeOnEscape)
+      toggle?.focus()
+    }
   }, [isOpen])
-
-  const showDark = scrolled || isOpen
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
+      <nav
+        aria-label="Navigazione principale"
         className={cn(
-          " top-0 left-0 right-0 z-50 transition-all duration-300 px-4 sm:px-6 lg:px-8 py-4",
-          scrolled ? "bg-background/80 backdrop-blur-md border-b border-white/10 shadow-lg py-2" : "bg-transparent absolute",
+          // Header fisso: trasparente sopra l'hero, scuro e compatto dopo lo scroll (nessuno spostamento del layout)
+          "fixed top-0 left-0 right-0 z-50 transition-[background-color,padding,box-shadow] duration-300 px-4 sm:px-6 lg:px-8",
+          scrolled || isOpen ? "bg-[#05080d]/90 backdrop-blur-md border-b border-white/10 shadow-lg py-2" : "bg-transparent py-4",
           className
         )}
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="relative z-50 flex items-center" onClick={() => setIsOpen(false)}>
-            <img
+            <img decoding="async"
               src="/images/loghi/lungo-bianco.webp"
               alt="Volleyball San Martino"
               className={cn("w-auto transition-all duration-300", scrolled ? "h-8" : "h-10 sm:h-12")}
@@ -85,21 +97,21 @@ export function Navigation({ className }: { className?: string }) {
           {/* Desktop Navigation */}
           <div className={cn(
             "hidden lg:flex items-center space-x-1 px-2 py-1 rounded-full border transition-all duration-300",
-            scrolled
-              ? "bg-background/50 backdrop-blur-sm border-border/50"
-              : "bg-black/20 backdrop-blur-md border-white/10"
+            scrolled ? "bg-white/5 border-white/10" : "bg-black/20 backdrop-blur-md border-white/10"
           )}>
             {navigationItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
+                aria-current={isActive(item.href) ? "page" : undefined}
                 className={cn(
                   "relative px-4 py-2 text-sm font-medium transition-colors rounded-full hover:bg-white/10 group",
-                  scrolled ? "text-foreground/80 hover:text-primary" : "text-white/90 hover:text-white"
+                  "text-white/90 hover:text-white",
+                  isActive(item.href) && "text-white"
                 )}
               >
                 {item.name}
-                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                <span aria-hidden="true" className={cn("absolute inset-x-3 bottom-1 h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left", isActive(item.href) && "scale-x-100")} />
               </Link>
             ))}
             {highlightItems.map((item) => (
@@ -112,15 +124,17 @@ export function Navigation({ className }: { className?: string }) {
               </Link>
             ))}
             <Button asChild variant="default" size="sm" className="ml-2 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-              <Link href="https://sanmartino.ninesquared.club" target="_blank">
-                <ShoppingBag className="w-4 h-4 mr-2" /> Shop
-              </Link>
+              <a href={SHOP_URL} target="_blank" rel="noopener noreferrer">
+                <ShoppingBag className="w-4 h-4 mr-2" aria-hidden="true" /> Shop
+                <span className="sr-only"> (si apre in una nuova scheda)</span>
+              </a>
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden z-50">
             <Button
+              ref={menuButtonRef}
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(!isOpen)}
@@ -128,15 +142,16 @@ export function Navigation({ className }: { className?: string }) {
               aria-controls="mobile-navigation"
               aria-label={isOpen ? "Chiudi menu" : "Apri menu"}
               className={cn(
-                "hover:bg-black/5 transition-colors",
-                showDark ? "text-foreground" : "text-white hover:bg-white/10"
+                "transition-colors text-white hover:bg-white/10 hover:text-white"
               )}
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isOpen ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
             </Button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
+      {/* Destinazione del link "Salta al contenuto" (app/layout.tsx) */}
+      <div id="main-content" tabIndex={-1} className="outline-none" />
 
       {/* Mobile Navigation Portal */}
       {mounted && createPortal(
@@ -149,8 +164,9 @@ export function Navigation({ className }: { className?: string }) {
               transition={{ duration: 0.2 }}
               id="mobile-navigation"
               role="dialog"
-              aria-label="Navigazione principale"
-              className="fixed inset-0 z-40 bg-background pt-24 px-6 pb-8 overflow-y-auto lg:hidden flex flex-col"
+              aria-modal="true"
+              aria-label="Menu di navigazione"
+              className="fixed inset-0 z-40 bg-[#05080d] text-white pt-24 px-6 pb-8 overflow-y-auto lg:hidden flex flex-col"
             >
               <div className="flex flex-col space-y-6 mt-4">
                 {navigationItems.map((item, idx) => (
@@ -163,7 +179,8 @@ export function Navigation({ className }: { className?: string }) {
                     <Link
                       href={item.href}
                       onClick={() => setIsOpen(false)}
-                      className="block text-2xl font-bold text-foreground hover:text-primary transition-colors py-2 border-b border-border/50"
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      className={cn("block text-2xl font-bold hover:text-primary transition-colors py-2 border-b border-white/10", isActive(item.href) ? "text-primary" : "text-white")}
                     >
                       {item.name}
                     </Link>
@@ -194,9 +211,10 @@ export function Navigation({ className }: { className?: string }) {
                   className="pt-6"
                 >
                   <Button asChild size="lg" className="w-full rounded-full text-lg bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-                    <Link href="https://sanmartino.ninesquared.club" target="_blank">
-                      <ShoppingBag className="w-5 h-5 mr-2" /> Shop Online
-                    </Link>
+                    <a href={SHOP_URL} target="_blank" rel="noopener noreferrer">
+                      <ShoppingBag className="w-5 h-5 mr-2" aria-hidden="true" /> Shop Online
+                      <span className="sr-only"> (si apre in una nuova scheda)</span>
+                    </a>
                   </Button>
                 </motion.div>
               </div>

@@ -8,7 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function normalizeImageSrc(value: string) {
   if (!value) return ""
 
-  const src = value.replace(/\\/g, "/")
+  // Normalizza separatori e prefissi duplicati salvati per errore (es. "/images/images/uploads/...")
+  const src = value.replace(/\\/g, "/").replace(/^\/?(images\/)+(?=images\/)/, "/")
 
   if (
     src.startsWith("data:") ||

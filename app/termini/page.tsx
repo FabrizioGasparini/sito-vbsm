@@ -1,10 +1,12 @@
 import type { Metadata } from "next"
 import { LegalPage } from "@/components/legal-page"
+import { pageMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Termini di servizio | Volleyball San Martino",
+export const metadata: Metadata = pageMetadata({
+  title: "Termini di servizio",
   description: "Termini di utilizzo del sito e dei servizi online di Volleyball San Martino.",
-}
+  path: "/termini",
+})
 
 export default function TerminiPage() {
   return (

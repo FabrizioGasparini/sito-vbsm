@@ -55,7 +55,7 @@ export default function CookieConsent() {
             <div className="space-y-1">
               <h2 className="font-semibold">Preferenze cookie</h2>
               <p className="text-muted-foreground">
-                Usiamo cookie tecnici necessari e, solo con il tuo consenso, analytics anonimi. <Link href="/cookies" className="font-medium text-primary underline underline-offset-4">Scopri di piu</Link>.
+                Usiamo cookie tecnici necessari e, solo con il tuo consenso, analytics anonimi. <Link href="/cookies" className="font-medium text-primary underline underline-offset-4">Scopri di più</Link>.
               </p>
             </div>
             <label className="flex items-start gap-3 rounded-md border border-border p-3">

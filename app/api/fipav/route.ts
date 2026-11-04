@@ -3,12 +3,30 @@ import { Championship, Match, SOCIETY_ID } from "@/lib/matches-data";
 
 const COMMITTEE_IDS = ["99934", "99908"];
 
+// La stagione sportiva inizia ad agosto: da agosto a dicembre vale l'anno corrente, altrimenti il precedente.
+// Sovrascrivibile con FIPAV_SEASON_YEAR se il servizio esterno usa una convenzione diversa.
+function currentSeasonYear() {
+  const override = Number(process.env.FIPAV_SEASON_YEAR);
+  if (Number.isInteger(override) && override > 2000) return override;
+  const now = new Date();
+  return now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+// Cache in memoria: evita decine di richieste al servizio esterno per ogni visita al calendario
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let cache: { data: unknown; expires: number } | null = null;
+
 export async function GET() {
+  if (cache && cache.expires > Date.now()) {
+    return NextResponse.json(cache.data, { status: 200, headers: corsHeaders });
+  }
+
   try {
+    const seasonYear = currentSeasonYear();
     const allChampionships = await Promise.all(
       COMMITTEE_IDS.map(async (id) => {
         // post api to get championships for a specific committee https://www.tuttoincodice.com/livescore/read/campionati.php?anno=2026
-        const res = await fetch('https://www.tuttoincodice.com/livescore/read/campionati.php?anno=2026', {
+        const res = await fetch(`https://www.tuttoincodice.com/livescore/read/campionati.php?anno=${seasonYear}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -36,7 +54,7 @@ export async function GET() {
 
     const results = await Promise.all(
       championships.map(async (championship) => {
-        const res = await fetch(`https://www.tuttoincodice.com//livescore/read/giornate.php`, {
+        const res = await fetch(`https://www.tuttoincodice.com/livescore/read/giornate.php`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -105,6 +123,7 @@ export async function GET() {
     );
 
     const data = Object.assign({}, ...results.filter(obj => Object.values(obj)[0].length > 0));
+    cache = { data, expires: Date.now() + CACHE_TTL_MS };
 
     return NextResponse.json(data, {
       status: 200,

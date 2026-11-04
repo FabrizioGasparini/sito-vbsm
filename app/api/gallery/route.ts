@@ -94,7 +94,11 @@ export async function PUT(req: NextRequest) {
     const updated = await prisma.gallery.update({
       where: { id: Number(id) },
       data: {
-        ...rest,
+        // Solo i campi previsti: evita che il body sovrascriva colonne arbitrarie
+        titolo: rest.titolo,
+        evento: rest.evento,
+        thumbnail: rest.thumbnail,
+        media: rest.media,
         data: new Date(rest.data),
       },
     })
