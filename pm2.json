@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "vbsm",
+            "script": "npm",
+            "args" : "start"
+        }
+    ]
+}

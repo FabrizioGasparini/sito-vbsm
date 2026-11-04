@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model coaches {
+  id           String         @id @db.VarChar(100)
+  nome         String         @db.VarChar(50)
+  cognome      String         @db.VarChar(50)
+  team_coaches team_coaches[]
+}
+
+model events {
+  id        BigInt   @id @unique(map: "id") @default(autoincrement()) @db.UnsignedBigInt
+  squadra   String   @db.VarChar(100)
+  palestra  String   @db.VarChar(100)
+  data      DateTime @db.Date
+  oraInizio DateTime @db.Time(0)
+  oraFine   DateTime @db.Time(0)
+  tipo      String   @db.VarChar(20)
+}
+
+model matches {
+  id         Int      @id
+  data       DateTime @db.Date
+  ora        DateTime @db.Time(0)
+  squadra    String   @db.VarChar(100)
+  avversario String   @db.VarChar(100)
+  casa       Boolean
+  palestra   String   @db.VarChar(100)
+  risultato  String?  @db.VarChar(20)
+  completata Boolean
+  campionato String   @db.VarChar(100)
+  giornata   Int?
+  arbitri    String?  @db.LongText
+  note       String?  @db.Text
+}
+
+model news {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique(map: "slug_unico") @db.VarChar(255)
+  titolo    String   @db.VarChar(255)
+  categoria String   @db.VarChar(100)
+  data      DateTime @db.DateTime(0)
+  autore    String?  @db.VarChar(100)
+  immagine  String?  @db.VarChar(255)
+  estratto  String?  @db.Text
+  contenuto String?  @db.LongText
+  tags      String?  @db.Text
+  featured  Boolean? @default(false)
+  immagini  String?  @db.LongText
+}
+
+model players {
+  id          Int      @id @default(autoincrement())
+  team_id     String   @db.VarChar(100)
+  nome        String   @db.VarChar(100)
+  cognome     String   @db.VarChar(100)
+  ruolo       String   @db.VarChar(50)
+  numero      Int?
+  capitano    Boolean? @default(false)
+  eta         Int?
+  altezza     String?  @db.VarChar(10)
+  peso        String?  @db.VarChar(10)
+  nazionalita String?  @db.VarChar(50)
+  foto        String?  @db.VarChar(255)
+  teams       teams    @relation(fields: [team_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "players_ibfk_1")
+
+  @@index([team_id], map: "team_id")
+}
+
+model team_coaches {
+  id       BigInt  @default(autoincrement())
+  team_id  String  @db.VarChar(50)
+  coach_id String  @db.VarChar(100)
+  ruolo    String  @db.VarChar(50)
+  teams    teams   @relation(fields: [team_id], references: [id], onUpdate: Restrict, map: "team_coaches_ibfk_1")
+  coaches  coaches @relation(fields: [coach_id], references: [id], onUpdate: Restrict, map: "team_coaches_ibfk_2")
+
+  @@id([team_id, coach_id])
+  @@index([coach_id], map: "coach_id")
+  @@index([id], map: "id")
+}
+
+model teams {
+  idx          Int
+  id           String         @id @db.VarChar(100)
+  categoria    String         @db.VarChar(100)
+  descrizione  String?        @db.Text
+  stagione     String         @db.VarChar(20)
+  campionato   String         @db.VarChar(100)
+  colore       String?        @db.VarChar(50)
+  immagine     String?        @db.VarChar(255)
+  players      players[]
+  team_coaches team_coaches[]
+
+  @@index([idx], map: "idx")
+}
+
+model gallery {
+  id         Int      @id @default(autoincrement())
+  titolo     String   @db.VarChar(255)
+  evento     String   @db.VarChar(100)
+  data       DateTime @db.DateTime(0)
+  thumbnail  String?  @db.VarChar(255)
+  media      String?  @db.LongText
+}
+
+model tournament_teams {
+  id                Int      @id @default(autoincrement())
+  nome_squadra      String   @db.VarChar(100)
+  nome_referente    String   @db.VarChar(100)
+  email_referente   String   @db.VarChar(150)
+  telefono_referente String  @db.VarChar(20)
+  citta             String?  @db.VarChar(100)
+  note              String?  @db.Text
+  pagato            Boolean  @default(false)
+  importo           Float?   @default(80)
+  creato_il         DateTime @default(now()) @db.DateTime(0)
+  giocatori         tournament_players[]
+  partite_casa      tournament_matches[] @relation("MatchHome")
+  partite_trasferta tournament_matches[] @relation("MatchAway")
+}
+
+model tournament_players {
+  id           Int             @id @default(autoincrement())
+  team_id      Int
+  nome         String          @db.VarChar(100)
+  cognome      String          @db.VarChar(100)
+  numero       Int?
+  ruolo        String?         @db.VarChar(50)
+  eta          Int?
+  squadra      tournament_teams @relation(fields: [team_id], references: [id], onDelete: Cascade, map: "fk_tournament_player_team")
+
+  @@index([team_id])
+}
+
+model tournament_matches {
+  id              Int             @id @default(autoincrement())
+  turno           Int
+  campo           Int
+  ora             String          @db.VarChar(10)
+  home_team_id    Int
+  away_team_id    Int
+  home_punteggio  Int?
+  away_punteggio  Int?
+  set_home        String?         @db.VarChar(20)
+  set_away        String?         @db.VarChar(20)
+  fase            String          @db.VarChar(50)
+  completata      Boolean         @default(false)
+  data            DateTime        @db.Date
+
+  home_team       tournament_teams @relation("MatchHome", fields: [home_team_id], references: [id], map: "fk_tournament_match_home_team")
+  away_team       tournament_teams @relation("MatchAway", fields: [away_team_id], references: [id], map: "fk_tournament_match_away_team")
+
+  @@index([home_team_id])
+  @@index([away_team_id])
+}
+
+model tournament_groups {
+  id        Int    @id @default(autoincrement())
+  nome      String @db.VarChar(10)
+  team_ids  String @db.Text // JSON array of team IDs
+}
