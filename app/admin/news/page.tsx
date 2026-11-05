@@ -14,24 +14,15 @@ import Link from "next/link"
 import { type NewsArticle, getCategories } from "@/lib/news-data"
 import { ImageUpload } from "@/components/image-upload"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { SOCIETY_ID } from "@/lib/matches-data"
+import type { CalendarMatch, CalendarResponse } from "@/lib/matches-data"
 import { normalizeImageSrc } from "@/lib/utils"
 
 type LocalArticle = Omit<NewsArticle, "id">
 
-interface MatchData {
-  campionato: string;
-  date: string;
-  time: string;
-  location: string;
-  home_team: { society_id: string; title: string };
-  away_team: { society_id: string; title: string };
-  result: string | null;
-  played: boolean;
-  sets: string[] | null;
-}
+type MatchData = CalendarMatch & { campionato: string }
 
-type APIMatch = Omit<MatchData, "campionato">
+// "2026-12-04" → "04/12/2026"
+const formatMatchDate = (iso: string) => iso.split("-").reverse().join("/")
 
 const emptyArticle: LocalArticle = {
   slug: "",
@@ -101,24 +92,21 @@ export default function AdminNewsPage() {
   const fetchMatches = async () => {
     try {
       const res = await fetch("/api/fipav")
-      const data: Record<string, APIMatch[]> = await res.json()
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: CalendarResponse = await res.json()
       const all: MatchData[] = Object.entries(data).flatMap(([campionato, matches]) =>
         matches.map((m) => ({ ...m, campionato }))
       )
       // Sort by date descending
-      setAvailableMatches(all.sort((a, b) => {
-        // Parse date dd/mm/yyyy
-        const [da, ma, ya] = a.date.split('/')
-        const [db, mb, yb] = b.date.split('/')
-        return new Date(Number(yb), Number(mb) - 1, Number(db)).getTime() - new Date(Number(ya), Number(ma) - 1, Number(da)).getTime()
-      })) // Most recent first
+      // Più recenti prima (date ISO: il confronto tra stringhe è cronologico)
+      setAvailableMatches(all.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`)))
     } catch (e) {
       console.error(e)
     }
   }
 
   const handleMatchSelect = (match: MatchData) => {
-    const isHome = match.home_team.society_id === SOCIETY_ID
+    const isHome = match.is_home
     const ourTeam = isHome ? match.home_team : match.away_team
     const theirTeam = isHome ? match.away_team : match.home_team
 
@@ -126,13 +114,9 @@ export default function AdminNewsPage() {
     let homeSets = 0
     let awaySets = 0
 
-    if (match.result) {
-      // Typically result is "3-0" or "1-3"
-      const parts = match.result.split('-')
-      if (parts.length === 2) {
-        homeSets = parseInt(parts[0])
-        awaySets = parseInt(parts[1])
-      }
+    if (match.home_setwin !== null && match.away_setwin !== null) {
+      homeSets = match.home_setwin
+      awaySets = match.away_setwin
     }
 
     const ourSets = isHome ? homeSets : awaySets
@@ -165,13 +149,18 @@ export default function AdminNewsPage() {
     newTags.push(isHome ? "Casa" : "Trasferta")
 
 
+    // location = "Palestra - Città (PR) - Indirizzo"
+    const [venueName = "", cityName = ""] = match.location.split(" - ")
+    const town = cityName.replace(/\s*\([A-Z]{2}\)$/, "") || venueName
+    const venueLabel = [venueName, cityName].filter(Boolean).join(", ")
+
     // Construct Title
     // "U16 FIPAV: vittoria netta a Correggio!"
     let title = `${match.campionato}: `
     if (isWin) {
       title += `vittoria ${isHome ? 'in casa' : 'esterna'} `
       if (isHome) title += `contro ${theirTeam.title}`
-      else title += `a ${match.location || 'trasferta'}`
+      else title += `a ${town || 'trasferta'}`
     } else {
       title += `sconfitta ${isHome ? 'casalinga' : 'in trasferta'} contro ${theirTeam.title}`
     }
@@ -194,17 +183,14 @@ export default function AdminNewsPage() {
       ? `Grande prova per la nostra ${match.campionato}, che porta a casa una vittoria importante per ${ourSets}–${theirSets} contro ${theirTeam.title}!`
       : `Partita difficile per la nostra ${match.campionato}, che cede per ${ourSets}–${theirSets} contro ${theirTeam.title}.`
 
-    content += `\n\nIl match si è svolto presso ${match.location}.`
+    content += `\n\nIl match si è svolto presso ${venueLabel || match.location}.`
 
     if (match.sets && match.sets.length > 0) {
       content += `\n\n**Parziali:**\n${match.sets.join(" • ")}`
     }
 
-    // Convert date for form (YYYY-MM-DDTHH:mm)
-    // input date is DD/MM/YYYY
-    const [d, m, y] = match.date.split('/')
-    // approximate time if not available
-    const isoDate = `${y}-${m}-${d}`
+    // La data della partita è già in formato ISO (YYYY-MM-DD)
+    const isoDate = match.date
 
     setFormData(prev => ({
       ...prev,
@@ -1143,12 +1129,8 @@ export default function AdminNewsPage() {
                     availableMatches
                       .filter(match => {
                         if (matchSearchTeam && !match.home_team.title.toLowerCase().includes(matchSearchTeam.toLowerCase()) && !match.away_team.title.toLowerCase().includes(matchSearchTeam.toLowerCase())) return false;
-                        // match.date is DD/MM/YYYY
-                        if (matchSearchDate) {
-                          const [d, m, y] = match.date.split('/');
-                          const iso = `${y}-${m}-${d}`;
-                          if (iso !== matchSearchDate) return false;
-                        }
+                        // match.date è già in formato ISO (YYYY-MM-DD), come il campo data
+                        if (matchSearchDate && match.date !== matchSearchDate) return false;
                         return true;
                       })
                       .map((match, idx) => (
@@ -1162,14 +1144,14 @@ export default function AdminNewsPage() {
                         >
                           <div className="flex-1 grid grid-cols-[60px_1fr] gap-4 items-center">
                             <div className="text-muted-foreground text-xs">
-                              <div>{match.date}</div>
+                              <div>{formatMatchDate(match.date)}</div>
                               <div>{match.time}</div>
                             </div>
                             <div>
                               <div className="font-medium">
-                                <span className={match.home_team.society_id === SOCIETY_ID ? "font-bold text-primary" : ""}>{match.home_team.title}</span>
+                                <span className={match.home_team.is_vbsm ? "font-bold text-primary" : ""}>{match.home_team.title}</span>
                                 <span className="mx-1 text-muted-foreground">vs</span>
-                                <span className={match.away_team.society_id === SOCIETY_ID ? "font-bold text-primary" : ""}>{match.away_team.title}</span>
+                                <span className={match.away_team.is_vbsm ? "font-bold text-primary" : ""}>{match.away_team.title}</span>
                               </div>
                               <div className="text-xs text-muted-foreground mt-0.5">
                                 {match.campionato} • {match.location}

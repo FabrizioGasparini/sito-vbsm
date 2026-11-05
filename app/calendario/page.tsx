@@ -10,27 +10,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin, Trophy, Info, Home, Plane, MapPinHouse, Share2 } from "lucide-react"
-import { SOCIETY_ID } from "@/lib/matches-data"
+import type { CalendarMatch, CalendarResponse } from "@/lib/matches-data"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 
-type APIMatch = {
-  id: string
-  date: string
-  time: string
-  location: string
-  lat: string
-  long: string
-  played: boolean
-  result: string | null
-  sets: string[] | null
-  home_setwin: string
-  away_setwin: string
-  home_team: { title: string; society_id: string; society: string; logo: string; }
-  away_team: { title: string; society_id: string; society: string; logo: string; }
+type APIMatch = CalendarMatch
+type APIResponse = CalendarResponse
+
+/** "2026-12-04" (+ "20:00") → Date nel fuso locale, senza le conversioni UTC di new Date("YYYY-MM-DD") */
+function parseMatchDate(date: string, time = "") {
+  const [y, m, d] = date.split("-").map(Number)
+  const [h = 0, min = 0] = time.split(":").map(Number)
+  return new Date(y, (m || 1) - 1, d || 1, h || 0, min || 0)
 }
 
-type APIResponse = Record<string, APIMatch[]>
+function matchTimestamp(match: APIMatch) {
+  return parseMatchDate(match.date, match.time).getTime()
+}
+
+/** Vittoria della squadra VBSM (solo per partite giocate) */
+function isVbsmWin(match: APIMatch) {
+  if (!match.played || match.home_setwin === null || match.away_setwin === null) return false
+  return match.is_home ? match.home_setwin > match.away_setwin : match.away_setwin > match.home_setwin
+}
 
 export default function CalendarioPage() {
   const [data, setData] = useState<APIResponse>({})
@@ -62,21 +64,7 @@ export default function CalendarioPage() {
   }, [])
 
   const getWeekRange = (dateStr: string) => {
-    const parts = dateStr.split("/")
-    let date: Date
-
-    if (parts.length === 3 && /^\d{1,4}$/.test(parts[0]) && /^\d{1,4}$/.test(parts[1]) && /^\d{2,4}$/.test(parts[2])) {
-      const [day, month, year] = parts
-      date = new Date(Number(year), Number(month) - 1, Number(day))
-    } else if (parts.length === 2 && /^\d{1,2}$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1])) {
-      // se manca l'anno, assume l'anno corrente
-      const [day, month] = parts
-      const year = new Date().getFullYear()
-      date = new Date(Number(year), Number(month) - 1, Number(day))
-    } else {
-      date = new Date(dateStr)
-    }
-
+    const date = parseMatchDate(dateStr)
     if (isNaN(date.getTime())) return dateStr
 
     // calcola lunedì (1) .. domenica (7)
@@ -108,8 +96,11 @@ export default function CalendarioPage() {
       : filteredMatchesByCampionato.filter(m => getWeekRange(m.date) === settimanaFiltro)
 
 
-  const prossime = filteredMatches.filter(m => !m.played)
-  const giocate = filteredMatches.filter(m => m.played)
+  // Le gare passate senza risultato (non ancora inserito dalla federazione) vanno tra i risultati, non tra le prossime
+  const todayStart = new Date().setHours(0, 0, 0, 0)
+  const isUpcoming = (m: APIMatch) => !m.played && parseMatchDate(m.date).getTime() >= todayStart
+  const prossime = filteredMatches.filter(isUpcoming)
+  const giocate = filteredMatches.filter(m => !isUpcoming(m))
 
   const groupedByWeek = prossime.reduce((acc, match) => {
     const week = getWeekRange(match.date)
@@ -125,6 +116,12 @@ export default function CalendarioPage() {
     return acc
   }, {} as Record<string, (APIMatch & { campionato: string })[]>)
 
+  // "dd/mm/yyyy - dd/mm/yyyy" → timestamp del lunedì, per ordinare le settimane
+  const weekStart = (week: string) => {
+    const [d, m, y] = week.split(" - ")[0].split("/").map(Number)
+    return new Date(y, m - 1, d).getTime()
+  }
+
   const settimaneDisponibili = Array.from(
     new Set(filteredMatchesByCampionato.map(m => getWeekRange(m.date)))
   )
@@ -138,28 +135,15 @@ export default function CalendarioPage() {
     })
 
   const formatDate = (date: string) => {
-    const parts = date.split("/")
-    let dt: Date
-
-    if (parts.length === 3 && /^\d{1,4}$/.test(parts[0]) && /^\d{1,4}$/.test(parts[1]) && /^\d{2,4}$/.test(parts[2])) {
-      // assume format giorno/mese/anno
-      const [day, month, year] = parts
-      dt = new Date(Number(year), Number(month) - 1, Number(day))
-    } else {
-      // fallback to JS Date parsing (ISO etc.)
-      dt = new Date(date)
-    }
-
-    if (isNaN(dt.getTime())) return date // se non valido, ritorna la stringa originale
-    return dt.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).slice(0, 1).toUpperCase() + dt.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).slice(1)
+    const dt = parseMatchDate(date)
+    if (isNaN(dt.getTime())) return date
+    const label = dt.toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })
+    return label.charAt(0).toUpperCase() + label.slice(1)
   }
 
   const MatchCard = ({ match }: { match: APIMatch & { campionato: string } }) => {
-    const isHome = match.home_team.society_id === SOCIETY_ID
-    const isWin =
-      match.played &&
-      ((match.result?.startsWith("3") && isHome) ||
-        (match.result?.endsWith("3") && !isHome))
+    const isHome = match.is_home
+    const isWin = isVbsmWin(match)
 
     const colorClasses = match.played
       ? isWin
@@ -219,19 +203,17 @@ export default function CalendarioPage() {
               <span className="text-gray-200">{match.campionato}</span>
             </Badge>
             <div className="text-lg font-semibold leading-tight flex items-center justify-center w-full gap-0 md:gap-10 px-1">
-              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-right md:text-center">{match.home_team.title.toUpperCase()}</span>
+              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-right md:text-center"><span className={match.home_team.is_vbsm ? "text-primary" : undefined}>{match.home_team.title.toUpperCase()}</span></span>
               {match.result ? (
                 <div className="text-sm">
-                  <span className={`font-bold text-lg`}><span className={`${match.home_setwin > match.away_setwin ? "text-green-600" : "text-red-600"} mx-2 md:ml-0`}>{match.home_setwin}</span> - <span className={`${match.away_setwin > match.home_setwin ? "text-green-600" : "text-red-600"} mx-2 md:mr-0`}>{match.away_setwin}</span></span>
+                  <span className={`font-bold text-lg`}><span className={`${(match.home_setwin ?? 0) > (match.away_setwin ?? 0) ? "text-green-600" : "text-red-600"} mx-2 md:ml-0`}>{match.home_setwin}</span> - <span className={`${(match.away_setwin ?? 0) > (match.home_setwin ?? 0) ? "text-green-600" : "text-red-600"} mx-2 md:mr-0`}>{match.away_setwin}</span></span>
                 </div>
               ) : <span className="mx-2 text-muted-foreground w-4">vs</span>}
-              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-left md:text-center">{match.away_team.title.toUpperCase()}</span>
+              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-left md:text-center"><span className={match.away_team.is_vbsm ? "text-primary" : undefined}>{match.away_team.title.toUpperCase()}</span></span>
             </div>
-            <div className="text-xs font-light text-gray-400 leading-tight flex items-center justify-center w-full gap-0 md:gap-10 px-1">
-              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-right md:text-center">{match.home_team.society.toUpperCase()}</span>
-              <span className="mx-5" />
-              <span className="flex-1 inline-block max-w-40 overflow-hidden text-ellipsis wrap-break-word [word-break:break-word] whitespace-normal text-left md:text-center">{match.away_team.society.toUpperCase()}</span>
-            </div>
+            {!match.played && matchTimestamp(match) < Date.now() && (
+              <p className="pt-1 text-xs text-muted-foreground">Risultato non ancora disponibile</p>
+            )}
           </div>
 
           {/* Luogo e Azioni */}
@@ -239,9 +221,9 @@ export default function CalendarioPage() {
             <div className="space-y-1 text-right">
               <div className="flex items-center gap-2 justify-end">
                 {isHome ? (
-                  <Home className="h-4 w-4 text-yellow-300" />
+                  <Home className="h-4 w-4 text-yellow-300" aria-label="In casa" />
                 ) : (
-                  <Plane className="h-4 w-4 text-blue-600" />
+                  <Plane className="h-4 w-4 text-blue-600" aria-label="In trasferta" />
                 )}
                 <span>{match.location.split(" - ")[0]}</span>
               </div>
@@ -290,25 +272,12 @@ export default function CalendarioPage() {
     const venue = parts[0] ?? match.location
     const address = parts.slice(1).join(", ")
 
-    const parseToDate = (date: string, time: string) => {
-      const parts = date.split("/")
-      let dt: Date
-      if (parts.length === 3 && /^\d{1,4}$/.test(parts[0])) {
-        const [day, month, year] = parts
-        const [h = "0", m = "0"] = (time || "").split(":")
-        dt = new Date(Number(year), Number(month) - 1, Number(day), Number(h), Number(m))
-      } else {
-        dt = new Date(`${date} ${time}`)
-      }
-      return dt
-    }
-
     const pad = (n: number) => n.toString().padStart(2, "0")
 
     const toCalendarString = (d: Date) =>
       `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`
 
-    const startDate = parseToDate(match.date, match.time)
+    const startDate = parseMatchDate(match.date, match.time)
     const endDate = new Date(startDate.getTime() + 1000 * 60 * 60 * 2) // durata stimata 2h
     const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
       `${match.home_team.title} vs ${match.away_team.title}`
@@ -379,8 +348,8 @@ export default function CalendarioPage() {
               <div className="flex items-start gap-2">
                 <Share2 className="h-4 w-4 mt-1" />
                 <div>
-                  <div className="text-xs text-muted-foreground">Coordinate</div>
-                  <div className="font-medium truncate">{match.lat}, {match.long}</div>
+                  <div className="text-xs text-muted-foreground">Squadra VBSM</div>
+                  <div className="font-medium">{match.is_home ? match.home_team.title : match.away_team.title} · {match.is_home ? "in casa" : "in trasferta"}</div>
                 </div>
               </div>
             </div>
@@ -389,7 +358,7 @@ export default function CalendarioPage() {
               <div className="w-4" />
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
                 <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(`${match.lat},${match.long}`)}`}
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(match.maps_query || match.location)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="w-full sm:w-auto"
@@ -415,11 +384,7 @@ export default function CalendarioPage() {
   }
 
   const MatchRecapModal = ({ match }: { match: APIMatch & { campionato: string } }) => {
-    const isHome = match.home_team.society_id === SOCIETY_ID
-    const isWin =
-      match.result &&
-      ((match.result.startsWith("3") && isHome) ||
-        (match.result.endsWith("3") && !isHome))
+    const isWin = isVbsmWin(match)
 
     return (
       <Dialog>
@@ -609,22 +574,12 @@ export default function CalendarioPage() {
               <TabsContent value="prossime" className="space-y-6">
                 {
                   prossime.length > 0 ? (
-                    Object.entries(groupedByWeek).map(([week, matches]) => (
+                    Object.entries(groupedByWeek).sort(([a], [b]) => weekStart(a) - weekStart(b)).map(([week, matches]) => (
                       <div key={week} className="space-y-4">
                         <h3 className="text-lg font-semibold mt-8 mb-4 flex items-center justify-center gap-2">
                           <Calendar className="h-5 w-5 text-primary" /> {week}
                         </h3>
-                        {matches.sort((a, b) => {
-                          const parseDMY = (d: string) => {
-                            const parts = d.split("/")
-                            if (parts.length === 3 && /^\d{1,4}$/.test(parts[0])) {
-                              const [day, month, year] = parts
-                              return new Date(Number(year), Number(month) - 1, Number(day)).getTime()
-                            }
-                            return new Date(d).getTime()
-                          }
-                          return parseDMY(a.date) - parseDMY(b.date)
-                        }).map(match => (
+                        {[...matches].sort((a, b) => matchTimestamp(a) - matchTimestamp(b)).map(match => (
                           <MatchCard key={match.id} match={match} />
                         ))}
                       </div>
@@ -643,22 +598,12 @@ export default function CalendarioPage() {
               {/* Risultati */}
               <TabsContent value="risultati" className="space-y-6">
                 {giocate.length > 0 ? (
-                  Object.entries(giocateGroupedByWeek).map(([week, matches]) => (
+                  Object.entries(giocateGroupedByWeek).sort(([a], [b]) => weekStart(b) - weekStart(a)).map(([week, matches]) => (
                     <div key={week} className="space-y-4">
                       <h3 className="text-lg font-semibold mt-8 mb-4 flex items-center justify-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" /> {week}
                       </h3>
-                      {matches.sort((a, b) => {
-                        const parseDMY = (d: string) => {
-                          const parts = d.split("/")
-                          if (parts.length === 3 && /^\d{1,4}$/.test(parts[0])) {
-                            const [day, month, year] = parts
-                            return new Date(Number(year), Number(month) - 1, Number(day)).getTime()
-                          }
-                          return new Date(d).getTime()
-                        }
-                        return parseDMY(a.date) - parseDMY(b.date)
-                      }).map(match => (
+                      {[...matches].sort((a, b) => matchTimestamp(a) - matchTimestamp(b)).map(match => (
                         <MatchCard key={match.id} match={match} />
                       ))}
                     </div>
