@@ -32,6 +32,9 @@ export const SOCIAL_LINKS = [
 
 export const SHOP_URL = "https://sanmartino.ninesquared.club"
 
+/** Codice fiscale dell'associazione, da indicare per la scelta del 5 per mille */
+export const TAX_CODE = "01305900357"
+
 export const DEFAULT_OG_IMAGE = "/images/2025-26/pages/societa.webp"
 
 export const LOGO_IMAGE = "/images/loghi/main.png"

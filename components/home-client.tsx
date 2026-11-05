@@ -20,6 +20,7 @@ import { NewsArticle } from "@/lib/news-data"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { normalizeImageSrc } from "@/lib/utils"
+import { FivePerMille } from "@/components/five-per-mille"
 import { FOUNDING_YEAR } from "@/lib/site"
 
 interface HomeClientProps {
@@ -214,6 +215,8 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                     </div>
                 </div>
             </section>
+
+            <FivePerMille />
 
             {/* In The Spotlight — News, editorial asymmetric layout */}
             <section className="py-20 md:py-28 bg-secondary/30">
