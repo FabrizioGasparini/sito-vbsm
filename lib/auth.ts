@@ -45,8 +45,3 @@ export function isAuthenticated(req: NextRequest) {
 export function isAdmin(req: NextRequest) {
     return getAuthContext(req).role === "admin"
 }
-
-export function canManageTorneo24h(req: NextRequest) {
-    const role = getAuthContext(req).role
-    return role === "admin" || role === "viewer"
-}

@@ -1,17 +1,9 @@
 import Link from "next/link"
-import { ArrowRight, BadgeCheck, Newspaper, ShieldCheck, UsersRound } from "lucide-react"
+import { ArrowRight, Newspaper, ShieldCheck, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 const adminCards = [
-  {
-    title: "Iscrizioni 24H",
-    description: "Controlla le richieste del torneo, i bonifici e lo stato delle iscrizioni.",
-    href: "/admin/torneo-24h",
-    label: "Gestisci iscrizioni 24H",
-    icon: BadgeCheck,
-    bullets: ["Vedi le squadre in attesa", "Apri il bonifico allegato", "Controlla referente e giocatori"],
-  },
   {
     title: "Gestione News",
     description: "Aggiungi, modifica ed elimina le notizie pubblicate sul sito.",
@@ -45,7 +37,7 @@ export default function AdminPage() {
               </div>
               <h1 className="font-ethnocentric text-3xl uppercase sm:text-4xl lg:text-5xl">Admin Panel</h1>
               <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-                Gestisci contenuti, iscrizioni e squadre con gli stessi ritmi visivi del resto del sito.
+                Gestisci contenuti e squadre con gli stessi ritmi visivi del resto del sito.
               </p>
             </div>
 
@@ -56,7 +48,7 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
           {adminCards.map((card) => {
             const Icon = card.icon
 

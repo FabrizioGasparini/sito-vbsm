@@ -22,7 +22,6 @@ const navigationItems = [
 ]
 
 const highlightItems: { name: string; href: string }[] = [
-  //{ name: "24 H", href: "/torneo-24h" },
 ]
 
 export function Navigation({ className }: { className?: string }) {

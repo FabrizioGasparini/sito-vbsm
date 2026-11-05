@@ -1,6 +1,6 @@
 # Sito Volleyball San Martino
 
-Sito ufficiale della società sportiva Volleyball San Martino: squadre, calendario FIPAV, news, gallerie, sponsor, Torneo 24H e area riservata di amministrazione.
+Sito ufficiale della società sportiva Volleyball San Martino: squadre, calendario FIPAV, news, gallerie, sponsor e area riservata di amministrazione.
 
 ## Stack
 
@@ -25,7 +25,7 @@ Copiare `.env.example` in `.env` e compilare tutti i valori. Il file `.env` **no
 | --- | --- |
 | `DATABASE_URL` | Connessione MySQL per Prisma |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Credenziali amministratore |
-| `VIEWER_USERNAME` / `VIEWER_PASSWORD` | Profilo limitato (gestione Torneo 24H), opzionale |
+| `VIEWER_USERNAME` / `VIEWER_PASSWORD` | Secondo profilo di accesso, opzionale |
 | `JWT_SECRET` | Segreto di firma dei token, almeno 32 caratteri casuali |
 | `NEXT_PUBLIC_SITE_URL` | URL pubblico (canonical, sitemap, Open Graph). Default `https://volleyballsanmartino.it` |
 | `UPLOAD_DIR` | Cartella degli upload. Default `C:\VBSM\storage\uploads` |
@@ -49,8 +49,7 @@ Deploy sul server: `node deploy.js` (installa, compila e riavvia il processo PM2
 
 ## Modalità manutenzione
 
-- **Sito intero**: creare il file `manutenzione.flag` nella root del progetto. Le pagine statiche leggono il flag in fase di build/rivalidazione, quindi dopo averlo creato o rimosso va rieseguita la build.
-- **Torneo 24H**: gestito dall'area riservata (`/admin/torneo-24h`), che crea/rimuove `torneo-24h.flag`.
+Creare il file `manutenzione.flag` nella root del progetto. Le pagine statiche leggono il flag in fase di build/rivalidazione, quindi dopo averlo creato o rimosso va rieseguita la build.
 
 ## Struttura
 
