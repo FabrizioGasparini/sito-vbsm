@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +54,16 @@ const emptyPlayerForm = {
   foto: "",
 }
 
+/** Invio con Enter dai campi di testo/numero (non da checkbox o pulsanti) */
+function submitOnEnter(event: React.KeyboardEvent, submit: () => void) {
+  const target = event.target as HTMLElement
+  if (event.key !== "Enter" || target.tagName !== "INPUT") return
+  const type = (target as HTMLInputElement).type
+  if (type === "checkbox" || type === "file") return
+  event.preventDefault()
+  submit()
+}
+
 export default function AdminSquadrePage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,16 +75,25 @@ export default function AdminSquadrePage() {
   const [editingPlayerId, setEditingPlayerId] = useState<number | string | null>(null)
   const [coachForm, setCoachForm] = useState({ id: "", nome: "", cognome: "", ruolo: "" })
   const [editingCoachId, setEditingCoachId] = useState<string | null>(null)
+  // Messaggi mostrati accanto ai pulsanti (il banner in alto non è visibile quando si è scesi nella pagina)
+  type Feedback = { type: "success" | "error"; text: string } | null
+  const [playerFeedback, setPlayerFeedback] = useState<Feedback>(null)
+  const [coachFeedback, setCoachFeedback] = useState<Feedback>(null)
+  const [savingPlayer, setSavingPlayer] = useState(false)
+  const [savingCoach, setSavingCoach] = useState(false)
+  const playerNomeRef = useRef<HTMLInputElement>(null)
+  const coachNomeRef = useRef<HTMLInputElement>(null)
 
   const selectedTeam = useMemo(
     () => teams.find((team) => team.id === selectedTeamId) ?? null,
     [teams, selectedTeamId]
   )
 
+  // Lo schermo di caricamento compare solo al primo avvio (loading parte da true):
+  // gli aggiornamenti dopo un salvataggio sostituiscono i dati sul posto, senza perdere la posizione nella pagina
   const loadTeams = async () => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/teams")
+      const res = await fetch("/api/teams", { cache: "no-store" })
       if (!res.ok) throw new Error("Errore nel caricamento delle squadre")
       const data = await res.json()
       const nextTeams = data ?? []
@@ -94,6 +113,12 @@ export default function AdminSquadrePage() {
   useEffect(() => {
     loadTeams()
   }, [])
+
+  // I messaggi di conferma si riferiscono alla squadra corrente
+  useEffect(() => {
+    setPlayerFeedback(null)
+    setCoachFeedback(null)
+  }, [selectedTeamId])
 
   useEffect(() => {
     if (!selectedTeam) return
@@ -173,14 +198,18 @@ export default function AdminSquadrePage() {
 
   const handlePlayerSave = async () => {
     if (!selectedTeamId) return
+    if (savingPlayer) return
     if (!playerForm.nome.trim() || !playerForm.cognome.trim()) {
-      setError("Nome e cognome del giocatore sono obbligatori")
+      setPlayerFeedback({ type: "error", text: "Nome e cognome del giocatore sono obbligatori" })
       return
     }
     if (playerForm.numero == null || !Number.isInteger(playerForm.numero) || playerForm.numero < 0 || playerForm.numero > 99) {
-      setError("Inserisci il numero di maglia (da 0 a 99)")
+      setPlayerFeedback({ type: "error", text: "Inserisci il numero di maglia (da 0 a 99)" })
       return
     }
+    const wasEditing = editingPlayerId != null
+    const savedName = `${playerForm.nome.trim()} ${playerForm.cognome.trim()}`
+    setSavingPlayer(true)
 
     try {
       const payload = {
@@ -202,11 +231,15 @@ export default function AdminSquadrePage() {
 
       setPlayerForm(emptyPlayerForm)
       setEditingPlayerId(null)
-      setError(null)
+      setPlayerFeedback({ type: "success", text: wasEditing ? `${savedName} aggiornato` : `${savedName} aggiunto al roster` })
       await loadTeams()
+      // Pronto per inserire subito il giocatore successivo
+      playerNomeRef.current?.focus()
     } catch (err) {
       console.error(err)
-      setError("Errore durante il salvataggio del giocatore")
+      setPlayerFeedback({ type: "error", text: "Errore durante il salvataggio del giocatore" })
+    } finally {
+      setSavingPlayer(false)
     }
   }
 
@@ -225,10 +258,14 @@ export default function AdminSquadrePage() {
 
   const handleCoachSave = async () => {
     if (!selectedTeamId) return
+    if (savingCoach) return
     if (!coachForm.nome.trim() || !coachForm.cognome.trim()) {
-      setError("Nome e cognome dell'allenatore sono obbligatori")
+      setCoachFeedback({ type: "error", text: "Nome e cognome sono obbligatori" })
       return
     }
+    const wasEditingCoach = Boolean(editingCoachId)
+    const savedCoachName = `${coachForm.nome.trim()} ${coachForm.cognome.trim()}`
+    setSavingCoach(true)
 
     try {
       const res = await fetch("/api/teams", {
@@ -251,11 +288,14 @@ export default function AdminSquadrePage() {
 
       setCoachForm({ id: "", nome: "", cognome: "", ruolo: "" })
       setEditingCoachId(null)
-      setError(null)
+      setCoachFeedback({ type: "success", text: wasEditingCoach ? `${savedCoachName} aggiornato` : `${savedCoachName} aggiunto allo staff` })
       await loadTeams()
+      coachNomeRef.current?.focus()
     } catch (err) {
       console.error(err)
-      setError("Errore durante il salvataggio dell'allenatore")
+      setCoachFeedback({ type: "error", text: "Errore durante il salvataggio dello staff" })
+    } finally {
+      setSavingCoach(false)
     }
   }
 
@@ -501,11 +541,12 @@ export default function AdminSquadrePage() {
                   <CardTitle className="text-white">Gestione staff</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-3" onKeyDown={(e) => submitOnEnter(e, handleCoachSave)}>
                     <div>
                       <Label htmlFor="coach-nome" className="text-slate-300">Nome *</Label>
                       <Input
                         id="coach-nome"
+                        ref={coachNomeRef}
                         value={coachForm.nome}
                         onChange={(e) => setCoachForm({ ...coachForm, nome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
@@ -533,8 +574,8 @@ export default function AdminSquadrePage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button onClick={handleCoachSave} className="rounded-full bg-primary px-6 py-5 text-white hover:bg-primary/90">
-                      {editingCoachId ? "Salva staff" : "Aggiungi staff"}
+                    <Button onClick={handleCoachSave} disabled={savingCoach} className="rounded-full bg-primary px-6 py-5 text-white hover:bg-primary/90">
+                      {savingCoach ? "Salvataggio..." : editingCoachId ? "Salva staff" : "Aggiungi staff"}
                     </Button>
                     {editingCoachId && (
                       <Button variant="outline" onClick={() => { setEditingCoachId(null); setCoachForm({ id: "", nome: "", cognome: "", ruolo: "" }) }} className="rounded-full border-white/10 bg-transparent text-white hover:bg-white/10">
@@ -542,6 +583,9 @@ export default function AdminSquadrePage() {
                       </Button>
                     )}
                   </div>
+                  <p role="status" aria-live="polite" className={`min-h-5 text-sm ${coachFeedback?.type === "error" ? "text-rose-300" : "text-emerald-300"}`}>
+                    {coachFeedback?.text}
+                  </p>
 
                   <div className="space-y-3">
                     {(selectedTeam.team_coaches ?? []).map((coach) => (
@@ -578,11 +622,12 @@ export default function AdminSquadrePage() {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" onKeyDown={(e) => submitOnEnter(e, handlePlayerSave)}>
                     <div>
                       <Label htmlFor="player-nome" className="text-slate-300">Nome *</Label>
                       <Input
                         id="player-nome"
+                        ref={playerNomeRef}
                         value={playerForm.nome}
                         onChange={(e) => setPlayerForm({ ...playerForm, nome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
@@ -641,9 +686,9 @@ export default function AdminSquadrePage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button onClick={handlePlayerSave} className="rounded-full bg-primary px-6 py-5 text-white hover:bg-primary/90">
+                    <Button onClick={handlePlayerSave} disabled={savingPlayer} className="rounded-full bg-primary px-6 py-5 text-white hover:bg-primary/90">
                       <UserPlus className="mr-2 h-4 w-4" />
-                      {editingPlayerId != null ? "Salva modifiche" : "Aggiungi giocatore"}
+                      {savingPlayer ? "Salvataggio..." : editingPlayerId != null ? "Salva modifiche" : "Aggiungi giocatore"}
                     </Button>
                     {editingPlayerId != null && (
                       <Button variant="outline" onClick={() => { setEditingPlayerId(null); setPlayerForm(emptyPlayerForm) }} className="rounded-full border-white/10 bg-transparent text-white hover:bg-white/10">
@@ -651,6 +696,9 @@ export default function AdminSquadrePage() {
                       </Button>
                     )}
                   </div>
+                  <p role="status" aria-live="polite" className={`min-h-5 text-sm ${playerFeedback?.type === "error" ? "text-rose-300" : "text-emerald-300"}`}>
+                    {playerFeedback?.text}
+                  </p>
 
                   <div className="space-y-3">
                     {selectedTeam?.players?.map((player) => (
