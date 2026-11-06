@@ -220,8 +220,8 @@ export default function TeamPage() {
     }, [team])
 
     // Se nessuno ha la foto si usa il layout a elenco, più adatto delle schede con segnaposto
-    const rosterHasPhotos = roster.some((player) => Boolean(player.photo))
-    const staffHasPhotos = staff.some((member) => Boolean(member.photo))
+    const rosterHasPhotos = false //roster.some((player) => Boolean(player.photo))
+    const staffHasPhotos = false //staff.some((member) => Boolean(member.photo))
 
     const upcomingMatches = useMemo(() => {
         const now = new Date().getTime()

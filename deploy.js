@@ -16,8 +16,8 @@ function run(cmd) {
 
 (async () => {
     try {
-        console.log("📦 Installazione dipendenze...");
-        await run("npm install");
+        /*console.log("📦 Installazione dipendenze...");
+        await run("npm install");*/
 
         console.log("🔨 Build del progetto...");
         await run("npm run build");

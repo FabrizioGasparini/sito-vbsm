@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isVbsmTeam, type CalendarMatch, type CalendarResponse, type RawFipavMatch } from "@/lib/matches-data";
 
 const BASE_URL = "https://www.tuttoincodice.com/livescore/read";
-const COMMITTEE_IDS = ["99934", "99908"];
+const COMMITTEE_IDS = ["99934", "99908", "1000007"];
 const REQUEST_TIMEOUT_MS = 20_000;
 // Più parallelismo non accelera (il servizio esterno risponde in sequenza) e oltre ~100 richieste va in timeout
 const MAX_PARALLEL_REQUESTS = 6;
@@ -47,13 +47,26 @@ type RawChampionship = { id: string; title: string; eliminato?: string };
  */
 function cleanText(value: string | null | undefined) {
   let text = (value || "").trim();
+
   if (/[ÂÃ]/.test(text)) {
     const decoded = Buffer.from(text, "latin1").toString("utf8");
     if (!decoded.includes("�")) text = decoded;
   }
+
+  const seasonYear = currentSeasonYear();
+  const nextYear = seasonYear + 1;
+
   return text
     .replace(/([A-Za-z])39/g, "$1'")
-    .replace(/([A-Za-z])(19[2-9]|2[0-4]\d|25[0-5])(?![0-9])/g, (_, letter: string, code: string) => letter + String.fromCharCode(Number(code)))
+    .replace(
+      /([A-Za-z])(19[2-9]|2[0-4]\d|25[0-5])(?![0-9])/g,
+      (_, letter: string, code: string) =>
+        letter + String.fromCharCode(Number(code))
+    )
+    .replace(
+      /^Pallavolo\s+\d{4}\/\d{4}\s+(.+?)\s+-\s+\1\s+/i,
+      "CSI $1 "
+    )
     .replace(/\s+/g, " ");
 }
 
