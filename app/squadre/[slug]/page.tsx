@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Team } from "@/lib/teams-data"
+import { initials } from "@/lib/team-photos"
 type ApiMatch = {
     id: number
     data: string
@@ -82,18 +83,26 @@ function formatDateFull(rawDate: string, rawTime: string) {
     })
 }
 
-function playerImage(teamId: string, nome: string, cognome: string) {
-    const file = `${cognome}-${nome}`
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace("ò", "o")
-    return `/images/2025-26/squadre/${teamId}/${file}.webp`
-}
+/** Foto con segnaposto: se l'immagine non si carica mostra il contenuto alternativo (numero o iniziali) */
+function PhotoOrPlaceholder({ src, alt, placeholder }: { src?: string | null; alt: string; placeholder: string }) {
+    const [failed, setFailed] = useState(false)
 
-function teamImage(teamId: string) {
-    return `/images/2025-26/squadre/${teamId}/squadra.webp`
+    if (!src || failed) {
+        return (
+            <div aria-hidden="true" className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_30%_20%,rgba(225,29,72,0.35),transparent_60%),linear-gradient(160deg,#111a26,#070b11)]">
+                <span className="font-ethnocentric text-5xl text-white/80">{placeholder}</span>
+            </div>
+        )
+    }
+
+    return (
+        <img loading="lazy" decoding="async"
+            src={src}
+            alt={alt}
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+    )
 }
 
 function belongsToTeamMatch(match: ApiMatch, team: Team) {
@@ -210,6 +219,10 @@ export default function TeamPage() {
         return [...team.team_coaches].sort((a, b) => (b.ruolo || "").localeCompare(a.ruolo || ""))
     }, [team])
 
+    // Se nessuno ha la foto si usa il layout a elenco, più adatto delle schede con segnaposto
+    const rosterHasPhotos = roster.some((player) => Boolean(player.photo))
+    const staffHasPhotos = staff.some((member) => Boolean(member.photo))
+
     const upcomingMatches = useMemo(() => {
         const now = new Date().getTime()
 
@@ -286,8 +299,10 @@ export default function TeamPage() {
                 </div>
 
                 <article className="relative rounded-2xl overflow-hidden border border-white/10">
-                    <div className="absolute inset-0">
-                        <img fetchPriority="high" decoding="async" src={teamImage(team.id)} alt={team.categoria} className="h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(225,29,72,0.45),transparent_55%),linear-gradient(135deg,#1a0b12,#05080d)]">
+                        {team.photo && (
+                            <img fetchPriority="high" decoding="async" src={team.photo} alt={team.categoria} className="h-full w-full object-cover" />
+                        )}
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/15" />
                     <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/95 to-transparent" />
@@ -309,7 +324,7 @@ export default function TeamPage() {
 
                 <section className="grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-[#0b121c] border border-white/10 p-4">
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Giocatrici</div>
+                        <div className="text-xs uppercase tracking-wider text-slate-400">Atleti</div>
                         <div className="text-3xl font-bold text-red-400 mt-1">{roster.length.toString().padStart(2, "0")}</div>
                     </div>
                     <div className="rounded-xl bg-[#0b121c] border border-white/10 p-4">
@@ -323,54 +338,87 @@ export default function TeamPage() {
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
                 <div className="mb-6">
                     <h2 className="font-ethnocentric text-3xl uppercase">Il roster</h2>
-                    <p className="text-slate-400 mt-2">Le atlete che scendono in campo con i colori del San Martino.</p>
+                    <p className="text-slate-400 mt-2">Chi scende in campo con i colori del San Martino.</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {roster.map((player) => (
-                        <article key={player.id} className="group rounded-xl overflow-hidden border border-white/10 bg-[#0b121c]">
-                            <div className="relative aspect-[3/4] overflow-hidden">
-                                <img loading="lazy" decoding="async"
-                                    src={playerImage(team.id, player.nome, player.cognome)}
-                                    alt={`${player.nome} ${player.cognome}`}
-                                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+                {roster.length === 0 ? (
+                    <p className="text-sm text-slate-400">Roster non ancora disponibile.</p>
+                ) : rosterHasPhotos ? (
+                    // Schede con foto (chi non ha la foto mostra il numero al suo posto)
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {roster.map((player) => (
+                            <article key={player.id} className="group rounded-xl overflow-hidden border border-white/10 bg-[#0b121c]">
+                                <div className="relative aspect-[3/4] overflow-hidden">
+                                    <PhotoOrPlaceholder
+                                        src={player.photo}
+                                        alt={`${player.nome} ${player.cognome}`}
+                                        placeholder={player.numero != null ? String(player.numero) : initials(player.nome, player.cognome)}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+                                    {player.capitano && (
+                                        <Badge className="absolute top-3 left-3 bg-amber-300 text-black text-[10px] uppercase tracking-wider">
+                                            Capitano
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="p-3">
+                                    {player.numero != null && (
+                                        <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">#{player.numero}</p>
+                                    )}
+                                    <h3 className="text-base sm:text-lg font-semibold mt-1 leading-tight">
+                                        {player.nome} {player.cognome}
+                                    </h3>
+                                    {player.ruolo && <p className="text-sm text-slate-400 mt-1">{player.ruolo}</p>}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                ) : (
+                    // Nessuna foto individuale: elenco compatto con numero di maglia
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {roster.map((player) => (
+                            <li key={player.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-[#0b121c] p-3 sm:p-4 transition-colors hover:border-red-400/40">
+                                <span
+                                    aria-hidden="true"
+                                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[radial-gradient(circle_at_30%_20%,rgba(225,29,72,0.45),transparent_65%),linear-gradient(160deg,#151f2d,#0a0f17)] font-ethnocentric text-2xl text-white"
+                                >
+                                    {player.numero ?? initials(player.nome, player.cognome)}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                    <h3 className="font-semibold leading-tight">
+                                        <span className="sr-only">{player.numero != null ? `Numero ${player.numero}: ` : ""}</span>
+                                        {player.nome} <span className="uppercase">{player.cognome}</span>
+                                    </h3>
+                                    {player.ruolo && <p className="mt-0.5 text-sm text-slate-400">{player.ruolo}</p>}
+                                </div>
                                 {player.capitano && (
-                                    <Badge className="absolute top-3 left-3 bg-amber-300 text-black text-[10px] uppercase tracking-wider">
+                                    <Badge className="shrink-0 bg-amber-300 text-black text-[10px] uppercase tracking-wider">
                                         Capitano
                                     </Badge>
                                 )}
-                            </div>
-                            <div className="p-3">
-                                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-400">
-                                    {player.numero ? `#${player.numero}` : "Senza numero"}
-                                </p>
-                                <h3 className="text-base sm:text-lg font-semibold mt-1 leading-tight">
-                                    {player.nome} {player.cognome}
-                                </h3>
-                                <p className="text-sm text-slate-400 mt-1">{player.ruolo || "Giocatrice"}</p>
-                            </div>
-                        </article>
-                    ))}
-                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </section>
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
                 <div className="mb-6">
                     <h2 className="font-ethnocentric text-3xl uppercase">Lo staff</h2>
-                    <p className="text-slate-400 mt-2">Allenatori e collaboratori presentati con lo stesso livello visivo del roster.</p>
+                    <p className="text-slate-400 mt-2">Allenatori e collaboratori della squadra.</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {staff.length > 0 ? (
-                        staff.map((member) => (
+                {staff.length === 0 ? (
+                    <p className="text-sm text-slate-400">Staff tecnico non disponibile.</p>
+                ) : staffHasPhotos ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {staff.map((member) => (
                             <article key={member.id} className="group rounded-xl overflow-hidden border border-white/10 bg-[#0b121c]">
                                 <div className="relative aspect-[4/5] overflow-hidden">
-                                    <img loading="lazy" decoding="async"
-                                        src={playerImage(team.id, member.nome, member.cognome)}
+                                    <PhotoOrPlaceholder
+                                        src={member.photo}
                                         alt={`${member.nome} ${member.cognome}`}
-                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        placeholder={initials(member.nome, member.cognome)}
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
                                     <Badge className="absolute top-3 left-3 bg-amber-300 text-black text-[10px] uppercase tracking-wider">
@@ -386,11 +434,25 @@ export default function TeamPage() {
                                     </h3>
                                 </div>
                             </article>
-                        ))
-                    ) : (
-                        <p className="text-sm text-slate-400">Staff tecnico non disponibile.</p>
-                    )}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {staff.map((member) => (
+                            <li key={member.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-[#0b121c] p-3 sm:p-4">
+                                <span aria-hidden="true" className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-amber-300/40 bg-amber-300/10 font-ethnocentric text-lg text-amber-200">
+                                    {initials(member.nome, member.cognome)}
+                                </span>
+                                <div className="min-w-0">
+                                    <h3 className="font-semibold leading-tight">
+                                        {member.nome} <span className="uppercase">{member.cognome}</span>
+                                    </h3>
+                                    <p className="mt-0.5 text-sm text-slate-400">{member.ruolo || "Staff tecnico"}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </section>
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 hidden">

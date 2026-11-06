@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { existsSync } from "fs";
+import path from "path";
+import { normalizeImageSrc } from "@/lib/utils";
+import { conventionalPersonPhoto, conventionalTeamPhoto } from "@/lib/team-photos";
 
 // Dati anagrafici sensibili degli atleti (spesso minorenni): visibili solo agli amministratori
 const PRIVATE_PLAYER_FIELDS = ["eta", "altezza", "peso", "nazionalita", "foto"] as const;
@@ -14,6 +18,56 @@ function publicPlayers<T extends Record<string, unknown>>(players: T[], admin: b
   });
 }
 
+// ---------------- FOTO (facoltative) ----------------
+
+/** Restituisce il percorso solo se il file esiste davvero in public/ */
+function existingPublicFile(publicPath: string) {
+  const file = path.join(process.cwd(), "public", ...publicPath.split("/").filter(Boolean));
+  return existsSync(file) ? publicPath : null;
+}
+
+/** Foto caricata dall'admin, altrimenti file nella cartella della squadra, altrimenti null */
+function resolvePhoto(uploaded: string | null | undefined, conventional: string) {
+  const fromAdmin = uploaded ? normalizeImageSrc(uploaded) : "";
+  return fromAdmin || existingPublicFile(conventional);
+}
+
+type TeamWithRelations = NonNullable<Awaited<ReturnType<typeof findTeams>>[number]>;
+
+function findTeams(where?: { id: string }) {
+  return prisma.teams.findMany({
+    where,
+    orderBy: { idx: "asc" },
+    include: {
+      players: true,
+      team_coaches: { include: { coaches: true } },
+    },
+  });
+}
+
+function serializeTeam(team: TeamWithRelations, admin: boolean) {
+  return {
+    ...team,
+    photo: resolvePhoto(team.immagine, conventionalTeamPhoto(team.id)),
+    players: publicPlayers(
+      team.players.map((player) => ({
+        ...player,
+        photo: resolvePhoto(player.foto, conventionalPersonPhoto(team.id, player.nome, player.cognome)),
+      })),
+      admin
+    ),
+    team_coaches: team.team_coaches
+      .filter((tc) => tc.coaches !== null)
+      .map((tc) => ({
+        id: tc.coach_id,
+        nome: tc.coaches!.nome,
+        cognome: tc.coaches!.cognome,
+        ruolo: tc.ruolo,
+        photo: existingPublicFile(conventionalPersonPhoto(team.id, tc.coaches!.nome, tc.coaches!.cognome)),
+      })),
+  };
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -21,34 +75,13 @@ export async function GET(req: NextRequest) {
     const admin = isAdmin(req);
 
     if (id) {
-      const team = await prisma.teams.findUnique({
-        where: { id },
-        include: {
-          players: true,
-          team_coaches: {
-            include: {
-              coaches: true,
-            },
-          },
-        },
-      });
+      const [team] = await findTeams({ id });
 
       if (!team) {
         return NextResponse.json({ error: "Squadra non trovata" }, { status: 404 });
       }
 
-      const safeTeam = {
-        ...team,
-        players: publicPlayers(team.players, admin),
-        team_coaches: team.team_coaches
-          .filter((tc) => tc.coaches !== null)
-          .map((tc) => ({
-            id: tc.coach_id,
-            nome: tc.coaches!.nome,
-            cognome: tc.coaches!.cognome,
-            ruolo: tc.ruolo,
-          })),
-      };
+      const safeTeam = serializeTeam(team, admin);
 
       return NextResponse.json(safeTeam, {
         status: 200,
@@ -56,30 +89,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const teams = await prisma.teams.findMany({
-      orderBy: { idx: "asc" },
-      include: {
-        players: true,
-        team_coaches: {
-          include: {
-            coaches: true,
-          },
-        },
-      },
-    });
-
-    const safeTeams = teams.map((team) => ({
-      ...team,
-      players: publicPlayers(team.players, admin),
-      team_coaches: team.team_coaches
-        .filter((tc) => tc.coaches !== null)
-        .map((tc) => ({
-          id: tc.coach_id,
-          nome: tc.coaches!.nome,
-          cognome: tc.coaches!.cognome,
-          ruolo: tc.ruolo,
-        })),
-    }));
+    const teams = await findTeams();
+    const safeTeams = teams.map((team) => serializeTeam(team, admin));
 
     return NextResponse.json(safeTeams, {
       status: 200,

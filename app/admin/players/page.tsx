@@ -177,6 +177,10 @@ export default function AdminSquadrePage() {
       setError("Nome e cognome del giocatore sono obbligatori")
       return
     }
+    if (playerForm.numero == null || !Number.isInteger(playerForm.numero) || playerForm.numero < 0 || playerForm.numero > 99) {
+      setError("Inserisci il numero di maglia (da 0 a 99)")
+      return
+    }
 
     try {
       const payload = {
@@ -499,24 +503,27 @@ export default function AdminSquadrePage() {
                 <CardContent className="space-y-5">
                   <div className="grid gap-4 md:grid-cols-3">
                     <div>
-                      <Label className="text-slate-300">Nome</Label>
+                      <Label htmlFor="coach-nome" className="text-slate-300">Nome *</Label>
                       <Input
+                        id="coach-nome"
                         value={coachForm.nome}
                         onChange={(e) => setCoachForm({ ...coachForm, nome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Cognome</Label>
+                      <Label htmlFor="coach-cognome" className="text-slate-300">Cognome *</Label>
                       <Input
+                        id="coach-cognome"
                         value={coachForm.cognome}
                         onChange={(e) => setCoachForm({ ...coachForm, cognome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Ruolo</Label>
+                      <Label htmlFor="coach-ruolo" className="text-slate-300">Ruolo <span className="text-slate-500">(facoltativo)</span></Label>
                       <Input
+                        id="coach-ruolo"
                         value={coachForm.ruolo}
                         onChange={(e) => setCoachForm({ ...coachForm, ruolo: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
@@ -565,28 +572,35 @@ export default function AdminSquadrePage() {
               <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="text-white">Gestione roster</CardTitle>
+                  <p className="text-sm text-slate-400">
+                    Bastano nome, cognome e numero. Ruolo, capitano e foto sono facoltativi: se nessun giocatore ha la foto,
+                    sul sito il roster viene mostrato come elenco con i numeri di maglia.
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <div>
-                      <Label className="text-slate-300">Nome</Label>
+                      <Label htmlFor="player-nome" className="text-slate-300">Nome *</Label>
                       <Input
+                        id="player-nome"
                         value={playerForm.nome}
                         onChange={(e) => setPlayerForm({ ...playerForm, nome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Cognome</Label>
+                      <Label htmlFor="player-cognome" className="text-slate-300">Cognome *</Label>
                       <Input
+                        id="player-cognome"
                         value={playerForm.cognome}
                         onChange={(e) => setPlayerForm({ ...playerForm, cognome: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Ruolo</Label>
+                      <Label htmlFor="player-ruolo" className="text-slate-300">Ruolo <span className="text-slate-500">(facoltativo)</span></Label>
                       <Input
+                        id="player-ruolo"
                         value={playerForm.ruolo}
                         onChange={(e) => setPlayerForm({ ...playerForm, ruolo: e.target.value })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
@@ -594,9 +608,13 @@ export default function AdminSquadrePage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-slate-300">Numero</Label>
+                      <Label htmlFor="player-numero" className="text-slate-300">Numero *</Label>
                       <Input
+                        id="player-numero"
                         type="number"
+                        min={0}
+                        max={99}
+                        required
                         value={playerForm.numero ?? ""}
                         onChange={(e) => setPlayerForm({ ...playerForm, numero: e.target.value === "" ? null : Number(e.target.value) })}
                         className="border-white/10 bg-white/5 text-white placeholder:text-slate-500"
@@ -604,7 +622,7 @@ export default function AdminSquadrePage() {
                     </div>
                     <div className="md:col-span-2 xl:col-span-3">
                       <ImageUpload
-                        label="Foto giocatore"
+                        label="Foto giocatore (facoltativa)"
                         value={playerForm.foto ?? ""}
                         onChange={(url) => setPlayerForm({ ...playerForm, foto: url })}
                       />
@@ -613,12 +631,13 @@ export default function AdminSquadrePage() {
 
                   <div className="flex items-center gap-2">
                     <input
+                      id="player-capitano"
                       type="checkbox"
                       checked={playerForm.capitano}
                       onChange={(e) => setPlayerForm({ ...playerForm, capitano: e.target.checked })}
                       className="h-4 w-4 rounded border-white/20 bg-white/5 text-primary"
                     />
-                    <Label className="text-slate-300">Capitano</Label>
+                    <Label htmlFor="player-capitano" className="text-slate-300">Capitano <span className="text-slate-500">(facoltativo)</span></Label>
                   </div>
 
                   <div className="flex gap-2">

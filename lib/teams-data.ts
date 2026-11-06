@@ -7,6 +7,8 @@ export interface Player {
   ruolo: string | null; 
   numero: number | null;
   capitano: boolean;
+  /** URL della foto se disponibile (calcolato da /api/teams), altrimenti null */
+  photo?: string | null;
 }
 
 export interface Coach {
@@ -14,6 +16,8 @@ export interface Coach {
   nome: string;
   cognome: string;
   ruolo: string | null; 
+  /** URL della foto se disponibile (calcolato da /api/teams), altrimenti null */
+  photo?: string | null;
 }
 
 export interface Team {
@@ -25,6 +29,8 @@ export interface Team {
   campionato: string;
   colore: string | null;
   immagine?: string | null;
+  /** URL della foto di squadra se disponibile (calcolato da /api/teams), altrimenti null */
+  photo?: string | null;
   players: Player[];
   team_coaches: Coach[];
 }

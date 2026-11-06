@@ -11,6 +11,26 @@ import { motion } from "framer-motion"
 import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
+/** Foto di squadra se disponibile, altrimenti un riquadro grafico con il nome della squadra */
+function TeamCover({ team, className, priority }: { team: Team; className: string; priority?: boolean }) {
+  if (team.photo) {
+    return (
+      <img
+        {...(priority ? { fetchPriority: "high" as const } : { loading: "lazy" as const })}
+        decoding="async"
+        src={team.photo}
+        alt={`Squadra ${team.categoria}`}
+        className={className}
+      />
+    )
+  }
+  return (
+    <div aria-hidden="true" className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_80%_15%,rgba(225,29,72,0.45),transparent_55%),linear-gradient(135deg,#1a0b12,#070b11)] p-6">
+      <span className="font-ethnocentric text-center text-2xl uppercase leading-tight text-white/85 sm:text-3xl">{team.categoria}</span>
+    </div>
+  )
+}
+
 export default function SquadrePage() {
   const [teamsData, setTeamsData] = useState<Team[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -50,7 +70,6 @@ export default function SquadrePage() {
       .replace("à", "a")
       .replace("è", "e")
 
-  const teamImage = (teamId: string) => `/images/2025-26/squadre/${teamId}/squadra.webp`
 
   return (
     <div className="min-h-screen bg-[#05080d] text-white">
@@ -97,11 +116,7 @@ export default function SquadrePage() {
                 <article className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                   <Link href={`/squadre/${slugFromCategoria(topTeam.categoria)}`}>
                     <div className="relative aspect-[16/9] overflow-hidden">
-                      <img fetchPriority="high" decoding="async"
-                        src={teamImage(topTeam.id)}
-                        alt={`Squadra ${topTeam.categoria}`}
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                      <TeamCover team={topTeam} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" priority />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
                       <Badge className="absolute left-4 top-4 bg-red-600 text-white uppercase tracking-[0.15em] text-[10px]">
                         In evidenza
@@ -132,11 +147,7 @@ export default function SquadrePage() {
                   <article key={squadra.id} className="rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
                     <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`}>
                       <div className="relative aspect-[16/10] overflow-hidden">
-                        <img loading="lazy" decoding="async"
-                          src={teamImage(squadra.id)}
-                          alt={`Squadra ${squadra.categoria}`}
-                          className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+                        <TeamCover team={squadra} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                       <div className="p-4">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Team ufficiale</p>
