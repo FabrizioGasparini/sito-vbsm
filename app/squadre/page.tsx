@@ -12,7 +12,13 @@ import { useEffect, useState } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 /** Foto di squadra se disponibile, altrimenti un riquadro grafico con il nome della squadra */
-function TeamCover({ team, className, priority }: { team: Team; className: string; priority?: boolean }) {
+const coverTextSize = {
+  lg: "text-2xl sm:text-4xl",
+  md: "text-xl sm:text-2xl",
+  sm: "text-sm sm:text-base",
+} as const
+
+function TeamCover({ team, className, priority, size = "md" }: { team: Team; className: string; priority?: boolean; size?: keyof typeof coverTextSize }) {
   if (team.photo) {
     return (
       <img
@@ -25,8 +31,8 @@ function TeamCover({ team, className, priority }: { team: Team; className: strin
     )
   }
   return (
-    <div aria-hidden="true" className="flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_80%_15%,rgba(225,29,72,0.45),transparent_55%),linear-gradient(135deg,#1a0b12,#070b11)] p-6">
-      <span className="font-ethnocentric text-center text-2xl uppercase leading-tight text-white/85 sm:text-3xl">{team.categoria}</span>
+    <div aria-hidden="true" className={`flex h-full w-full items-center justify-center bg-[radial-gradient(circle_at_80%_15%,rgba(225,29,72,0.45),transparent_55%),linear-gradient(135deg,#1a0b12,#070b11)] ${size === "sm" ? "p-3" : "p-6"} ${className.includes("absolute") ? "absolute inset-0" : ""}`}>
+      <span className={`font-ethnocentric text-center uppercase leading-tight text-white/85 ${coverTextSize[size]}`}>{team.categoria}</span>
     </div>
   )
 }
@@ -55,9 +61,10 @@ export default function SquadrePage() {
   const sortedTeams = [...teamsData].sort((a, b) => b.idx - a.idx)
   const filteredTeams = sortedTeams
 
-  const topTeam = filteredTeams[0]
-  const sideTeams = filteredTeams.slice(1, 3)
-  const gridTeams = filteredTeams.slice(3)
+  // Layout a tre livelli: 2 squadre grandi, 2 medie, tutte le altre piccole
+  const largeTeams = filteredTeams.slice(0, 2)
+  const mediumTeams = filteredTeams.slice(2, 4)
+  const smallTeams = filteredTeams.slice(4)
 
   const totalAthletes = teamsData.reduce((sum, team) => sum + team.players.length, 0)
   const totalStaff = teamsData.reduce((sum, team) => sum + team.team_coaches.length, 0)
@@ -97,89 +104,100 @@ export default function SquadrePage() {
         </motion.div>
 
         {isLoading ? (
-          <div className="space-y-8">
-            <Skeleton className="h-[360px] w-full rounded-2xl bg-white/10" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="h-44 w-full rounded-xl bg-white/10" />
-                  <Skeleton className="h-4 w-2/3 bg-white/10" />
-                  <Skeleton className="h-4 w-1/2 bg-white/10" />
-                </div>
-              ))}
+          <div className="space-y-6" aria-busy="true">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map((i) => <Skeleton key={i} className="aspect-[16/12] w-full rounded-2xl bg-white/10" />)}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[1, 2].map((i) => <Skeleton key={i} className="h-44 w-full rounded-2xl bg-white/10" />)}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="aspect-[16/14] w-full rounded-xl bg-white/10" />)}
             </div>
           </div>
         ) : filteredTeams.length > 0 ? (
           <>
-            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {topTeam && (
-                <article className="lg:col-span-2 rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
-                  <Link href={`/squadre/${slugFromCategoria(topTeam.categoria)}`}>
-                    <div className="relative aspect-[16/9] overflow-hidden">
-                      <TeamCover team={topTeam} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" priority />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
-                      <Badge className="absolute left-4 top-4 bg-red-600 text-white uppercase tracking-[0.15em] text-[10px]">
-                        In evidenza
-                      </Badge>
-                    </div>
-                    <div className="p-5 sm:p-6">
-                      <h2 className="text-3xl font-bold uppercase tracking-wide text-white group-hover:text-red-400 transition-colors">
-                        {topTeam.categoria}
-                      </h2>
-                      <p className="text-slate-300 mt-2 line-clamp-2">{topTeam.descrizione || "Team ufficiale Volleyball San Martino"}</p>
-                      <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-300">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users className="h-4 w-4" />
-                          {topTeam.players.length} atleti
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <UserCircle2 className="h-4 w-4" />
-                          {topTeam.team_coaches.length} staff
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </article>
-              )}
-
-              <div className="space-y-6">
-                {sideTeams.map((squadra) => (
+            {/* Livello 1: due squadre in grande */}
+            {largeTeams.length > 0 && (
+              <section aria-label="Squadre in evidenza" className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {largeTeams.map((squadra, index) => (
                   <article key={squadra.id} className="rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
-                    <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`}>
+                    <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`} className="flex h-full flex-col">
                       <div className="relative aspect-[16/10] overflow-hidden">
-                        <TeamCover team={squadra} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <TeamCover team={squadra} size="lg" priority={index === 0} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                        <Badge className="absolute left-4 top-4 bg-red-600 text-white uppercase tracking-[0.15em] text-[10px]">
+                          In evidenza
+                        </Badge>
                       </div>
-                      <div className="p-4">
+                      <div className="flex flex-1 flex-col p-5 sm:p-6">
+                        <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white group-hover:text-red-400 transition-colors">
+                          {squadra.categoria}
+                        </h2>
+                        <p className="text-slate-300 mt-2 line-clamp-2">{squadra.descrizione || "Team ufficiale Volleyball San Martino"}</p>
+                        <div className="mt-auto pt-4 flex flex-wrap items-center gap-4 text-sm text-slate-300">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users className="h-4 w-4" aria-hidden="true" />
+                            {squadra.players.length} atleti
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <UserCircle2 className="h-4 w-4" aria-hidden="true" />
+                            {squadra.team_coaches.length} staff
+                          </span>
+                          <span className="ml-auto inline-flex items-center gap-1 text-red-400">
+                            Vedi squadra <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
+                ))}
+              </section>
+            )}
+
+            {/* Livello 2: due squadre in formato medio (foto a sinistra, dettagli a destra) */}
+            {mediumTeams.length > 0 && (
+              <section aria-label="Altre squadre principali" className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {mediumTeams.map((squadra) => (
+                  <article key={squadra.id} className="rounded-2xl overflow-hidden border border-white/10 bg-[#09121e] group">
+                    <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`} className="flex h-full flex-col sm:flex-row">
+                      <div className="relative aspect-[16/10] sm:aspect-auto sm:w-2/5 sm:min-h-[11rem] shrink-0 overflow-hidden">
+                        <TeamCover team={squadra} size="md" className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                      <div className="flex flex-1 flex-col p-4 sm:p-5">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Team ufficiale</p>
                         <h3 className="text-xl uppercase font-semibold mt-1 text-white group-hover:text-red-400 transition-colors line-clamp-2">
                           {squadra.categoria}
                         </h3>
                         <p className="text-slate-400 text-sm mt-2 line-clamp-2">{squadra.descrizione || "Roster e staff tecnico"}</p>
+                        <div className="mt-auto pt-3 flex items-center justify-between text-sm text-slate-300">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Users className="h-4 w-4" aria-hidden="true" />
+                            {squadra.players.length} atleti
+                          </span>
+                          <ArrowRight className="h-4 w-4 text-red-400 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+                        </div>
                       </div>
                     </Link>
                   </article>
                 ))}
-              </div>
-            </section>
+              </section>
+            )}
 
-            {gridTeams.length > 0 && (
-              <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {gridTeams.map((squadra) => (
-                  <article key={squadra.id} className="rounded-2xl border border-white/10 bg-[#09121e] p-4 group">
-                    <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`}>
-                      <p className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Volley</p>
-                      <h3 className="mt-1 text-xl uppercase font-semibold text-white group-hover:text-red-400 transition-colors line-clamp-2">
-                        {squadra.categoria}
-                      </h3>
-                      <p className="text-slate-400 text-sm mt-2 line-clamp-2">
-                        {squadra.descrizione || "Scopri il gruppo, lo staff e il roster completo"}
-                      </p>
-
-                      <div className="mt-4 flex items-center justify-between text-sm text-slate-300">
-                        <span>{squadra.players.length} atleti</span>
-                        <span className="inline-flex items-center gap-1 text-red-400">
-                          Vedi roster <ArrowRight className="h-3.5 w-3.5" />
-                        </span>
+            {/* Livello 3: tutte le altre squadre in piccolo */}
+            {smallTeams.length > 0 && (
+              <section aria-label="Tutte le altre squadre" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+                {smallTeams.map((squadra) => (
+                  <article key={squadra.id} className="rounded-xl overflow-hidden border border-white/10 bg-[#09121e] group">
+                    <Link href={`/squadre/${slugFromCategoria(squadra.categoria)}`} className="flex h-full flex-col">
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        <TeamCover team={squadra} size="sm" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                      <div className="flex flex-1 flex-col p-3">
+                        <h3 className="text-sm sm:text-base uppercase font-semibold leading-tight text-white group-hover:text-red-400 transition-colors line-clamp-2">
+                          {squadra.categoria}
+                        </h3>
+                        <p className="mt-auto pt-2 text-xs text-slate-400">{squadra.players.length} atleti</p>
                       </div>
                     </Link>
                   </article>
