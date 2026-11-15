@@ -22,6 +22,7 @@ import { Footer } from "@/components/footer"
 import { normalizeImageSrc } from "@/lib/utils"
 import { FivePerMille } from "@/components/five-per-mille"
 import { FOUNDING_YEAR } from "@/lib/site"
+import { mediaUrl } from "@/lib/media"
 
 interface HomeClientProps {
     latestNews: NewsArticle[]
@@ -68,7 +69,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
             <section ref={targetRef} className="relative min-h-screen overflow-hidden">
                 <motion.div style={{ opacity, scale, y }} className="absolute inset-0 z-0">
                     <img fetchPriority="high" decoding="async"
-                        src="/images/2025-26/pages/societa.webp"
+                        src={mediaUrl("/images/2025-26/pages/societa.webp")}
                         alt="Volleyball San Martino"
                         className="h-full w-full object-cover brightness-[0.6]"
                     />
@@ -131,7 +132,7 @@ export function HomeClient({ latestNews }: HomeClientProps) {
                                 </p>
                                 <div className="relative w-34 h-32 lg:w-44 lg:h-44">
                                     <img loading="lazy" decoding="async"
-                                        src="/images/loghi/main.webp"
+                                        src={mediaUrl("/images/loghi/main.webp")}
                                         alt="Volleyball San Martino"
                                         className="h-full w-full object-fill p-1"
                                     />

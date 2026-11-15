@@ -31,16 +31,22 @@ const nextConfig = {
                 pathname: "/images/**",
             },
             ...(mediaUrl
-                ? [{ protocol: mediaUrl.protocol.replace(":", ""), hostname: mediaUrl.hostname, port: mediaUrl.port, pathname: "/uploads/**" }]
+                ? [{ protocol: mediaUrl.protocol.replace(":", ""), hostname: mediaUrl.hostname, port: mediaUrl.port, pathname: "/**" }]
                 : []),
         ],
         qualities: [30, 40, 50, 60, 70, 80, 90, 100],
         formats: ["image/avif", "image/webp"],
     },
-    // Gli indirizzi "/uploads/..." scritti a mano (es. dentro il testo delle news) finiscono sul dominio dei media
+    // I file dell'archivio (stessi percorsi di lib/media.ts) richiesti al sito, per esempio da link scritti
+    // dentro il testo delle news, finiscono sul dominio dei media
     async redirects() {
         if (!mediaUrl) return []
-        return [{ source: "/uploads/:path*", destination: `${mediaUrl.origin}/uploads/:path*`, permanent: false }]
+        const paths = ["/uploads/:path*", "/pdfs/:path*", "/images/loghi/:path*", "/images/:season(\\d{4}-\\d{2})/:path*"]
+        return paths.map((source) => ({
+            source,
+            destination: `${mediaUrl.origin}${source.replace(/\(.*?\)/g, "")}`,
+            permanent: false,
+        }))
     },
     async headers() {
         return [

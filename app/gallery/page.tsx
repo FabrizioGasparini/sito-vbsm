@@ -9,6 +9,8 @@ import { Gallery } from "@/lib/gallery-data"
 import { motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { mediaUrl } from "@/lib/media"
+import { normalizeImageSrc } from "@/lib/utils"
 
 export default function GalleriesPage() {
     const [events, setEvents] = useState<Gallery[]>([])
@@ -44,7 +46,7 @@ export default function GalleriesPage() {
             <section className="relative h-[50vh] flex items-center justify-center overflow-hidden">
                 <div className="absolute inset-0 z-0">
                     <img fetchPriority="high" decoding="async"
-                        src="/images/2025-26/pages/societa.webp"
+                        src={mediaUrl("/images/2025-26/pages/societa.webp")}
                         alt="Gallery Hero"
                         className="h-full w-full object-cover brightness-[0.3]"
                     />
@@ -95,7 +97,7 @@ export default function GalleriesPage() {
                                     <div className="group relative cursor-pointer">
                                         <div className="relative h-80 w-full overflow-hidden rounded-3xl border border-white/10 bg-card shadow-xl transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
                                             <img loading="lazy" decoding="async"
-                                                src={ev.thumbnail || "/images/placeholder.svg"}
+                                                src={normalizeImageSrc(ev.thumbnail || "") || "/images/placeholder.svg"}
                                                 alt={ev.titolo}
                                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />

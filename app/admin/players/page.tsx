@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { ImageUpload } from "@/components/image-upload"
 import { ArrowLeft, ShieldCheck, Save, Trash2, Plus, Pencil, UserPlus } from "lucide-react"
 import Link from "next/link"
+import { normalizeImageSrc } from "@/lib/utils"
 
 interface Player {
   id?: number | string
@@ -386,7 +387,7 @@ export default function AdminSquadrePage() {
                       className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     >
                       <img loading="lazy" decoding="async"
-                        src={team.immagine || `/images/2025-26/squadre/${team.id}/squadra.webp` || "/images/placeholder.svg"}
+                        src={normalizeImageSrc(team.immagine || `/images/2025-26/squadre/${team.id}/squadra.webp`)}
                         alt={team.categoria}
                         className="h-12 w-12 rounded-xl object-cover"
                         onError={(e) => {
@@ -427,7 +428,7 @@ export default function AdminSquadrePage() {
 
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/10">
                   <img loading="lazy" decoding="async"
-                    src={selectedTeam.immagine || `/images/2025-26/squadre/${selectedTeam.id}/squadra.webp` || "/images/placeholder.svg"}
+                    src={normalizeImageSrc(selectedTeam.immagine || `/images/2025-26/squadre/${selectedTeam.id}/squadra.webp`)}
                     alt={selectedTeam.categoria}
                     className="h-40 w-full object-cover"
                     onError={(e) => {
@@ -705,7 +706,7 @@ export default function AdminSquadrePage() {
                       <div key={String(player.id ?? `${player.nome}-${player.cognome}`)} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                           <img loading="lazy" decoding="async"
-                            src={player.foto || "/images/placeholder.svg"}
+                            src={player.foto ? normalizeImageSrc(player.foto) : "/images/placeholder.svg"}
                             alt={`${player.nome} ${player.cognome}`}
                             className="h-12 w-12 rounded-full object-cover"
                             onError={(e) => {

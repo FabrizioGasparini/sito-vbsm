@@ -1,3 +1,4 @@
+import { mediaUrl } from "./media"
 // Dati anagrafici e di contatto della società, usati da metadata SEO, dati strutturati e footer.
 // Tutti i valori provengono dai contenuti già presenti nel sito.
 
@@ -35,9 +36,9 @@ export const SHOP_URL = "https://sanmartino.ninesquared.club"
 /** Codice fiscale dell'associazione, da indicare per la scelta del 5 per mille */
 export const TAX_CODE = "01305900357"
 
-export const DEFAULT_OG_IMAGE = "/images/2025-26/pages/societa.webp"
+export const DEFAULT_OG_IMAGE = mediaUrl("/images/2025-26/pages/societa.webp")
 
-export const LOGO_IMAGE = "/images/loghi/main.png"
+export const LOGO_IMAGE = mediaUrl("/images/loghi/main.png")
 
 export function absoluteUrl(pathname = "/") {
   if (/^https?:\/\//i.test(pathname)) return pathname

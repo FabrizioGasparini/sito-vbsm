@@ -35,9 +35,10 @@ Copiare `.env.example` in `.env` e compilare tutti i valori. Il file `.env` **no
 | `INSTAGRAM_API_VERSION` | Opzionale: versione dell'API di Instagram (default `v26.0`) |
 | `R2_ACCOUNT_ID` | Cloudflare R2: ID dell'account (oppure `R2_ENDPOINT` completo, es. per la giurisdizione UE) |
 | `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Cloudflare R2: chiavi di un token API "Object Read & Write" limitato ai due bucket |
-| `R2_PUBLIC_BUCKET` | Bucket pubblico per le immagini caricate dall'admin. Se manca, gli upload restano in `UPLOAD_DIR` |
+| `R2_PUBLIC_BUCKET` | Bucket pubblico per upload, cartelle delle stagioni, loghi e pdf. Se manca, restano su disco (`UPLOAD_DIR` e `public/`) |
 | `R2_PRIVATE_BUCKET` | Bucket privato per i dati del generatore di post (contiene il token Instagram). Se manca, restano in `POST_DATA_DIR` |
-| `NEXT_PUBLIC_MEDIA_URL` | Dominio pubblico del bucket degli upload, es. `https://media.vbsm.it`. Va impostato **prima** di `npm run build` |
+| `STORAGE_DIR` | Opzionale, solo per `npm run storage:migrate`: cartella dell'archivio da copiare (default: la cartella che contiene `UPLOAD_DIR`) |
+| `NEXT_PUBLIC_MEDIA_URL` | Dominio pubblico del bucket pubblico, es. `https://media.vbsm.it`. Va impostato **prima** di `npm run build` |
 
 ## Comandi
 
@@ -57,18 +58,29 @@ Deploy sul server: `node deploy.js` (installa, compila e riavvia il processo PM2
 
 ## Archivio su Cloudflare R2
 
-Il codice in `lib/storage.ts` salva i file su R2 quando i bucket sono configurati, altrimenti su disco. Nel database gli indirizzi restano `/uploads/<file>`: con `NEXT_PUBLIC_MEDIA_URL` impostato vengono riscritti verso il dominio dei media (e `/uploads/*` sul sito reindirizza lì).
+Il codice in `lib/storage.ts` legge e salva i file su R2 quando i bucket sono configurati, altrimenti su disco. Nel bucket pubblico le chiavi coincidono con i percorsi del sito:
+
+| Cartella in `C:\VBSM\storage` | Percorso sul sito e chiave su R2 |
+| --- | --- |
+| `uploads` | `/uploads/…` (immagini caricate dall'admin) |
+| `2025-26` (e ogni cartella stagione `AAAA-AA`) | `/images/2025-26/…` (pagine, squadre, sponsor, gallerie) |
+| `loghi` | `/images/loghi/…` |
+| `pdfs` | `/pdfs/…` |
+| `post-generator` | bucket **privato**, chiavi `post-generator/…` |
+
+Nel database gli indirizzi restano relativi (es. `/uploads/<file>`): con `NEXT_PUBLIC_MEDIA_URL` impostato `lib/media.ts` li trasforma in indirizzi del dominio dei media, e gli stessi percorsi richiesti al sito reindirizzano lì. Gallerie e foto delle squadre vengono elencate direttamente dal bucket (l'elenco delle foto delle squadre resta in memoria 5 minuti).
 
 1. Dashboard Cloudflare → **R2** → crea due bucket, ad esempio `vbsm-media` (pubblico) e `vbsm-private` (privato).
 2. `vbsm-media` → **Settings → Custom Domains** → collega un sottodominio, ad esempio `media.vbsm.it`. **Non** rendere pubblico `vbsm-private`.
 3. **R2 → Manage API tokens** → crea un token "Object Read & Write" limitato ai due bucket e copia Access Key ID e Secret Access Key.
+   Su `vbsm-media` → **Settings → CORS policy** consenti `GET` dall'origine `https://volleyballsanmartino.it`: serve alle miniature dei video delle gallerie, che vengono disegnate nel browser.
 4. Sul server aggiungi al `.env` le variabili `R2_*` e `NEXT_PUBLIC_MEDIA_URL` (tabella sopra).
 5. Copia i file esistenti: `npm run storage:migrate -- --dry-run` per vedere cosa verrà copiato, poi `npm run storage:migrate`. I file locali non vengono cancellati e lo script si può rilanciare.
 6. `node deploy.js` (la build deve vedere `NEXT_PUBLIC_MEDIA_URL`), poi di nuovo `npm run storage:migrate` per copiare quanto caricato nel frattempo.
 
 Per tornare su disco basta togliere le variabili `R2_*` e `NEXT_PUBLIC_MEDIA_URL` e rifare la build (i file caricati su R2 nel frattempo vanno riscaricati a mano).
 
-Restano in `public/` sul server le immagini fisse del sito, le foto delle squadre per convenzione di nome e le gallerie.
+Le immagini aggiunte a mano nelle cartelle dell'archivio (nuove foto di squadra, gallerie, sponsor) vanno caricate sul bucket: dalla dashboard di Cloudflare oppure copiandole in `C:\VBSM\storage` e rilanciando `npm run storage:migrate`, che copia solo i file nuovi o modificati. Restano in `public/` solo i file fuori da quelle cartelle (es. `/images/placeholder.svg`).
 
 ## Modalità manutenzione
 

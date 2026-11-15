@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { prisma } from "@/lib/prisma"
 import { pageMetadata, toDescription } from "@/lib/seo"
+import { mediaUrl } from "@/lib/media"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         description: toDescription(team.descrizione, fallback),
         // canonical sullo slug della categoria, lo stesso usato dai link interni
         path: `/squadre/${slugify(team.categoria) || slug}`,
-        image: `/images/2025-26/squadre/${team.id}/squadra.webp`,
+        image: mediaUrl(`/images/2025-26/squadre/${team.id}/squadra.webp`),
       })
     }
   } catch (error) {

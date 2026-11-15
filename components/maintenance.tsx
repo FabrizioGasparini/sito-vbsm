@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button"
 import { FooterSmall } from "./footer-small"
+import { mediaUrl } from "@/lib/media"
 
 export default function MaintenancePage() {
     return (
         <div className="min-h-screen flex flex-col h-full">
             <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-b from-primary/20 via-[#05080d] to-[#05080d] text-white text-center px-6 py-16">
                 <img fetchPriority="high" decoding="async"
-                    src="/images/loghi/lungo-bianco.webp"
+                    src={mediaUrl("/images/loghi/lungo-bianco.webp")}
                     alt="Logo Volleyball San Martino"
                     className="mb-8 animate-pulse w-full max-w-md"
                 />

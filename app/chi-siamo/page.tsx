@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Download, FileText } from "lucide-react"
 import { motion } from "framer-motion"
+import { mediaUrl } from "@/lib/media"
 
 const storia = [
   {
@@ -36,39 +37,39 @@ const staff = [
     nome: "Roberto Intonti",
     ruolo: "Presidente / Direttore Sportivo",
     descrizione: "Guida la società con passione e dedizione",
-    immagine: "/images/2025-26/pages/chi-siamo/presidente.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/presidente.webp"),
     large: true,
   },
   {
     nome: "Enrico Ruozzi",
     ruolo: "Vice Presidente",
     descrizione: "Supporta il presidente nelle decisioni strategiche",
-    immagine: "/images/2025-26/pages/chi-siamo/vice-presidente.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/vice-presidente.webp"),
     large: true,
   },
   {
     nome: "Alberto Iotti",
     ruolo: "Direttore Tecnico Maschile",
     descrizione: "Coordina l'attività delle squadre maschili",
-    immagine: "/images/2025-26/pages/chi-siamo/direttore-tecnico-maschile.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/direttore-tecnico-maschile.webp"),
   },
   {
     nome: "Catia Cattini",
     ruolo: "Direttrice Tecnica Femminile",
     descrizione: "Coordina l'attività delle squadre femminili",
-    immagine: "/images/2025-26/pages/chi-siamo/direttore-tecnico-femminile.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/direttore-tecnico-femminile.webp"),
   },
   {
     nome: "Erio Cavazzoni",
     ruolo: "Dirigente Maschile",
     descrizione: "Assiste il direttore tecnico maschile nella gestione delle squadre",
-    immagine: "/images/2025-26/pages/chi-siamo/dirigente-maschile.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/dirigente-maschile.webp"),
   },
   {
     nome: "Antonella Iannicello",
     ruolo: "Dirigente Femminile",
     descrizione: "Assiste il direttore tecnico femminile nella gestione delle squadre",
-    immagine: "/images/2025-26/pages/chi-siamo/dirigente-femminile.webp",
+    immagine: mediaUrl("/images/2025-26/pages/chi-siamo/dirigente-femminile.webp"),
   },
 ]
 
@@ -96,7 +97,7 @@ const staff = [
 ]
 */
 
-const pdfUrl = "/pdfs/nuovo-logo-vbsm.pdf"
+const pdfUrl = mediaUrl("/pdfs/nuovo-logo-vbsm.pdf")
 
 export default function ChiSiamoPage() {
   return (
@@ -159,7 +160,7 @@ export default function ChiSiamoPage() {
             </div>
             <div className="relative">
               <img loading="lazy" decoding="async"
-                src="/images/2025-26/pages/promozione.webp"
+                src={mediaUrl("/images/2025-26/pages/promozione.webp")}
                 alt="La famiglia Volleyball San Martino"
                 className="rounded-lg shadow-lg w-full"
               />

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, Calendar, Play, X } from "lucide-react"
 import VideoThumbnail from "@/components/video-thumbnail"
 import { Gallery } from "@/lib/gallery-data"
+import { normalizeImageSrc } from "@/lib/utils"
 
 type MediaItem = { tipo: "foto" | "video"; url: string; thumbnail?: string | null }
 
@@ -75,7 +76,7 @@ export default function GalleryPageClient({ slug }: { slug: string }) {
             {/* ===== HERO HEADER con blur ===== */}
             <section className="relative min-h-96 sm:min-h-112 py-6 mt-1 flex flex-col justify-center items-center text-center text-white overflow-hidden">
                 <img fetchPriority="high" decoding="async"
-                    src={evento.thumbnail || "/images/placeholder.svg"}
+                    src={normalizeImageSrc(evento.thumbnail || "") || "/images/placeholder.svg"}
                     alt={evento.titolo}
                     className="h-full w-full object-cover blur-[10px] brightness-[0.5]"
                 />

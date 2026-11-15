@@ -9,6 +9,7 @@ import { Menu, X, ShoppingBag } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { SHOP_URL } from "@/lib/site"
+import { mediaUrl } from "@/lib/media"
 
 const navigationItems = [
   { name: "Home", href: "/" },
@@ -87,7 +88,7 @@ export function Navigation({ className }: { className?: string }) {
           {/* Logo */}
           <Link href="/" className="relative z-50 flex items-center" onClick={() => setIsOpen(false)}>
             <img decoding="async"
-              src="/images/loghi/lungo-bianco.webp"
+              src={mediaUrl("/images/loghi/lungo-bianco.webp")}
               alt="Volleyball San Martino"
               className={cn("w-auto transition-all duration-300", scrolled ? "h-8" : "h-10 sm:h-12")}
             />

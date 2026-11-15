@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { NextRequest, NextResponse } from "next/server"
 import { isAdmin } from "@/lib/auth"
-import fs from "fs"
-import path from "path"
+import { readMediaFiles } from "@/lib/gallery-data"
 
 // ✅ Valori di default
 const emptyGallery = {
@@ -20,34 +19,8 @@ export async function GET() {
       orderBy: { data: "desc" },
     })
 
-    // 🔍 Leggiamo i file per ogni cartella "media"
-    const parsed = galleries.map((row) => {
-      let mediaFiles: { url: string; tipo: string; }[] = []
-
-      if (row.media) {
-        try {
-          // Path assoluto alla cartella
-          const folderPath = path.join(process.cwd(), "public", row.media)
-          if (fs.existsSync(folderPath)) {
-            // aggiungi oggetto {url: string, tipo: "foto" | "video"}
-            const files = fs.readdirSync(folderPath)
-            mediaFiles = files
-              .filter((f) => /\.(jpg|jpeg|png|webp|mp4|mov|avi)$/i.test(f))
-              .map((f) => ({
-                url: path.join(row.media!, f).replace(/\\/g, "/"), // URL web
-                tipo: /\.(mp4|mov|avi)$/i.test(f) ? "video" : "foto",
-              }))
-          }
-        } catch (e) {
-          console.error(`Errore lettura cartella media ${row.media}:`, e)
-        }
-      }
-
-      return {
-        ...row,
-        media: mediaFiles,
-      }
-    })
+    // File di ogni galleria, letti dalla cartella indicata in "media" (archivio R2 o public/)
+    const parsed = await Promise.all(galleries.map(async (row) => ({ ...row, media: await readMediaFiles(row.media) })))
 
     return NextResponse.json(parsed, { status: 200 })
   } catch (err) {

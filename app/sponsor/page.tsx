@@ -8,6 +8,7 @@ import { Handshake } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { mediaUrl } from "@/lib/media"
 
 const sponsorPrincipali = [
   {
@@ -175,7 +176,7 @@ export default function SponsorPage() {
               <Card key={index} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="relative">
                   <img loading="lazy" decoding="async"
-                    src={`/images/2025-26/sponsors/${sponsor.logo}`}
+                    src={mediaUrl(`/images/2025-26/sponsors/${sponsor.logo}`)}
                     alt={`Logo ${sponsor.nome}`}
                     className="w-full h-32 object-contain bg-muted/30 p-4"
                   />

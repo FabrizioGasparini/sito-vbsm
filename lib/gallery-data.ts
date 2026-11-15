@@ -1,6 +1,6 @@
 import { prisma } from "./prisma"
-import fs from "fs"
-import path from "path"
+import { listFiles } from "./storage"
+import { mediaUrl } from "./media"
 
 export interface Gallery {
   id: number
@@ -19,25 +19,22 @@ export const emptyGallery: Omit<Gallery, "id"> = {
   media: [], // 🔹 array, non string
 } as const
 
-// 🧠 Funzione di utilità per leggere i file dentro una cartella
-function readMediaFiles(folder: string | null): { url: string; tipo: "foto" | "video"; }[] {
-  if (!folder) return []
+/**
+ * Foto e video nella cartella della galleria (es. "/images/2025-26/gallery/torneo"), letti dall'archivio:
+ * bucket R2 se configurato, altrimenti public/ sul server. Gli indirizzi puntano al dominio dei media.
+ */
+export async function readMediaFiles(folder: string | null): Promise<{ url: string; tipo: "foto" | "video" }[]> {
+  const dir = (folder || "").replace(/\\/g, "/").replace(/^\/*(public\/)?/, "").replace(/\/+$/, "")
+  if (!dir) return []
 
   try {
-    // Path assoluto nel progetto (es. /public/gallery/torneo-under18)
-    const folderPath = path.join(process.cwd(), "public", folder)
-    if (!fs.existsSync(folderPath)) return []
-
-    // Filtra solo immagini e video
-    const files = fs
-      .readdirSync(folderPath)
+    const files = await listFiles("media", dir)
+    return files
       .filter((file) => /\.(jpg|jpeg|png|webp|gif|mp4|mov|avi)$/i.test(file))
       .map((file) => ({
-        url: path.join("/", folder, file).replace(/\\/g, "/"),
-        tipo: /\.(mp4|mov|avi)$/i.test(file) ? "video" : "foto",
-      } as const))
-
-    return files
+        url: mediaUrl(`/${dir}/${file}`),
+        tipo: /\.(mp4|mov|avi)$/i.test(file) ? ("video" as const) : ("foto" as const),
+      }))
   } catch (err) {
     console.error(`❌ Errore durante la lettura dei media da ${folder}:`, err)
     return []
@@ -50,13 +47,7 @@ export async function getGalleryEvents(): Promise<Gallery[]> {
     orderBy: { data: "desc" },
   })
 
-  return rows.map((row) => ({
-    ...row,
-    media: readMediaFiles(row.media).map(({ url, tipo }) => ({
-      url,
-      tipo,
-    })),
-  }))
+  return Promise.all(rows.map(async (row) => ({ ...row, media: await readMediaFiles(row.media) })))
 }
 
 // ---------------- GET SINGLE EVENT ----------------
@@ -68,7 +59,7 @@ export async function getGalleryEvent(id: string): Promise<Gallery | undefined> 
 
   return {
     ...evento,
-    media: readMediaFiles(evento.media), // 🔹 legge i file dal path
+    media: await readMediaFiles(evento.media),
   }
 }
 
