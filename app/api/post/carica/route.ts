@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { mkdir, writeFile } from "fs/promises"
-import path from "path"
 import { isAdmin } from "@/lib/auth"
 import { detectFileType } from "@/lib/uploads"
-import { decodeDataUrl, MAX_POST_UPLOAD, POST_FILES_DIR, slug } from "@/lib/post-generator"
+import { putFile } from "@/lib/storage"
+import { decodeDataUrl, MAX_POST_UPLOAD, slug } from "@/lib/post-generator"
 
 /** Logo o sponsor caricato dal generatore: { tipo: "loghi" | "sponsor", nome, dataUrl } */
 export async function POST(req: NextRequest) {
@@ -18,9 +17,8 @@ export async function POST(req: NextRequest) {
     const detected = detectFileType(buffer)
     if (!detected || !detected.mime.startsWith("image/")) return NextResponse.json({ error: "Tipo di file non supportato" }, { status: 400 })
 
-    await mkdir(POST_FILES_DIR, { recursive: true })
     const fileName = `${tipo}-${slug(nome)}-${Date.now().toString(36)}.${detected.ext}`
-    await writeFile(path.join(POST_FILES_DIR, fileName), buffer)
+    await putFile("post", `file/${fileName}`, buffer, { contentType: detected.mime })
     return NextResponse.json({ file: `/api/post/file/${fileName}` })
   } catch (err) {
     console.error("Post generator upload:", err)

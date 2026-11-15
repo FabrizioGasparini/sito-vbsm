@@ -11,7 +11,8 @@
         "start": "next start",
         "lint": "eslint .",
         "typecheck": "tsc --noEmit",
-        "db:generate": "prisma generate"
+        "db:generate": "prisma generate",
+        "storage:migrate": "node --env-file=.env scripts/migrate-storage-to-r2.mjs"
     },
     "dependencies": {
         "@prisma/client": "^6.17.1",
@@ -22,6 +23,7 @@
         "@radix-ui/react-separator": "1.1.1",
         "@radix-ui/react-slot": "1.1.1",
         "@radix-ui/react-tabs": "1.1.2",
+        "aws4fetch": "^1.0.20",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "framer-motion": "^12.23.26",

@@ -13,15 +13,15 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { randomBytes } from "crypto"
-import { mkdir, readFile, writeFile } from "fs/promises"
-import path from "path"
 import { isAdmin, isAuthenticated } from "@/lib/auth"
 import { SITE_URL } from "@/lib/site"
-import { decodeDataUrl, MAX_POST_UPLOAD, POST_DATA_DIR } from "@/lib/post-generator"
+import { getText, putFile } from "@/lib/storage"
+import { decodeDataUrl, MAX_POST_UPLOAD } from "@/lib/post-generator"
 
 export const dynamic = "force-dynamic"
 
-const IG_FILE = path.join(POST_DATA_DIR, "instagram.json")
+/** Nell'area "post" dell'archivio: con R2 deve stare nel bucket privato */
+const IG_FILE = "instagram.json"
 const IG_HOST = (process.env.INSTAGRAM_API_HOST || "https://graph.instagram.com").replace(/\/+$/, "")
 const IG_VERSION = process.env.INSTAGRAM_API_VERSION || "v26.0"
 const TOKEN_REFRESH_AFTER_MS = 7 * 24 * 3600 * 1000
@@ -38,15 +38,14 @@ const jobs = new Map<string, Job>()
 
 async function readIg(): Promise<IgConfig> {
   try {
-    return JSON.parse(await readFile(IG_FILE, "utf8"))
+    return JSON.parse((await getText("post", IG_FILE)) || "{}")
   } catch {
     return {}
   }
 }
 
 async function writeIg(ig: IgConfig) {
-  await mkdir(POST_DATA_DIR, { recursive: true })
-  await writeFile(IG_FILE, JSON.stringify(ig, null, 2))
+  await putFile("post", IG_FILE, JSON.stringify(ig, null, 2), { contentType: "application/json" })
 }
 
 async function igRequest(method: "GET" | "POST", pathname: string, params: Record<string, string>, ig: IgConfig) {

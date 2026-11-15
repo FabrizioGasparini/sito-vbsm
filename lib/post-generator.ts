@@ -1,13 +1,11 @@
-// Generatore dei post risultati: dati salvati su disco (fuori dal progetto, sopravvivono ai deploy)
+// Generatore dei post risultati: dati nell'area "post" dell'archivio (bucket R2 privato o cartella
+// locale, vedi lib/storage.ts), fuori dal progetto così sopravvivono ai deploy.
+//   config.json, config.json.bak, instagram.json, file/<logo o sponsor>, cache-loghi/<hash>
 import path from "path"
 import { promises as fs } from "fs"
-import { UPLOAD_DIR } from "@/lib/uploads"
+import { getText, putFile } from "@/lib/storage"
 
-/** Cartella dati: configurazione, loghi/sponsor caricati, cache loghi, token Instagram */
-export const POST_DATA_DIR = process.env.POST_DATA_DIR || path.join(path.dirname(UPLOAD_DIR), "post-generator")
-export const POST_FILES_DIR = path.join(POST_DATA_DIR, "file")
-export const POST_CACHE_DIR = path.join(POST_DATA_DIR, "cache-loghi")
-const CONFIG_FILE = path.join(POST_DATA_DIR, "config.json")
+const CONFIG_FILE = "config.json"
 
 /** Grafica inclusa nel progetto (sfondo, strisce, loghi e sponsor iniziali) */
 export const POST_ASSETS_DIR = path.join(process.cwd(), "post-generator", "assets")
@@ -28,19 +26,24 @@ export function mimeOf(file: string) {
 }
 
 /** Configurazione (squadre, sponsor, archivio avversari, colori): al primo avvio parte da quella inclusa */
+// Un errore di rete verso l'archivio viene propagato: tornare alla configurazione iniziale farebbe
+// rischiare di sovrascrivere quella vera al salvataggio successivo.
 export async function readPostConfig(): Promise<unknown> {
-  try {
-    return JSON.parse(await fs.readFile(CONFIG_FILE, "utf8"))
-  } catch {
-    return JSON.parse(await fs.readFile(DEFAULT_CONFIG_FILE, "utf8"))
+  const saved = await getText("post", CONFIG_FILE)
+  if (saved) {
+    try {
+      return JSON.parse(saved)
+    } catch {}
   }
+  return JSON.parse(await fs.readFile(DEFAULT_CONFIG_FILE, "utf8"))
 }
 
 export async function writePostConfig(config: unknown) {
-  await fs.mkdir(POST_DATA_DIR, { recursive: true })
+  const json = { contentType: "application/json" }
   // copia della versione precedente, in caso di errori
-  await fs.copyFile(CONFIG_FILE, `${CONFIG_FILE}.bak`).catch(() => {})
-  await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2))
+  const previous = await getText("post", CONFIG_FILE).catch(() => null)
+  if (previous) await putFile("post", `${CONFIG_FILE}.bak`, previous, json)
+  await putFile("post", CONFIG_FILE, JSON.stringify(config, null, 2), json)
 }
 
 /** Risolve un percorso dentro una cartella, rifiutando "../" e simili */

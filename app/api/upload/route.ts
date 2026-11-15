@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { mkdir } from "fs/promises"
-import path from "path"
 import sharp from "sharp"
 import { isAdmin } from "@/lib/auth"
-import { detectFileType, MAX_UPLOAD_SIZE, sanitizeBaseName, UPLOAD_DIR } from "@/lib/uploads"
+import { putFile } from "@/lib/storage"
+import { detectFileType, MAX_UPLOAD_SIZE, sanitizeBaseName } from "@/lib/uploads"
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,13 +29,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Tipo di file non supportato" }, { status: 400 })
     }
 
-    await mkdir(UPLOAD_DIR, { recursive: true })
-
     const filename = `${Date.now()}-${sanitizeBaseName(file.name)}.webp`
 
     // Conversione automatica in WebP (rimuove anche i metadati EXIF)
-    await sharp(buffer).rotate().webp({ quality: 82 }).toFile(path.join(UPLOAD_DIR, filename))
+    const webp = await sharp(buffer).rotate().webp({ quality: 82 }).toBuffer()
+    // Il nome contiene un timestamp: il file non cambia mai, si può mettere in cache per sempre
+    await putFile("uploads", filename, webp, { contentType: "image/webp", cacheControl: "public, max-age=31536000, immutable" })
 
+    // Nel database resta sempre "/uploads/<file>": normalizeImageSrc lo traduce nel dominio dei media
     return NextResponse.json({ url: `/uploads/${filename}` })
   } catch (err) {
     console.error("Upload error:", err)
