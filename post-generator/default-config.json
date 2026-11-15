@@ -1,0 +1,156 @@
+{
+  "colori": {
+    "femminile": "#5E17EB",
+    "maschile": "#FFDE59"
+  },
+  "squadre": [
+    {
+      "nome": "Under 19 Femminile",
+      "cerca": [
+        "BLACK OR WHITE",
+        "UNDER 19 FEMM",
+        "U19 F"
+      ],
+      "categoria": "UNDER 19 FEMMINILE",
+      "genere": "femminile",
+      "nomeSquadra": "BLACK OR WHITE\nVBSM",
+      "sponsor": "black-or-white"
+    },
+    {
+      "nome": "Under 17 Femminile",
+      "cerca": [
+        "PIZZERIA REGINA",
+        "UNDER 17 FEMM",
+        "U17 F"
+      ],
+      "categoria": "UNDER 17 FEMMINILE",
+      "genere": "femminile",
+      "nomeSquadra": "PIZZERIA REGINA\nVBSM",
+      "sponsor": "pizzeria-regina"
+    },
+    {
+      "nome": "Under 15 Femminile",
+      "cerca": [
+        "LADURINI",
+        "UNDER 15 FEMM",
+        "U15 F"
+      ],
+      "categoria": "UNDER 15 FEMMINILE",
+      "genere": "femminile",
+      "nomeSquadra": "S.E.A. DI LADURINI\nVBSM",
+      "sponsor": "sea-ladurini"
+    },
+    {
+      "nome": "Under 13 Femminile",
+      "cerca": [
+        "OCL",
+        "LAVANDERIA",
+        "UNDER 13 FEMM",
+        "U13 F"
+      ],
+      "categoria": "UNDER 13 FEMMINILE",
+      "genere": "femminile",
+      "nomeSquadra": "OCL LAVANDERIA\nVBSM",
+      "sponsor": "ocl-lavanderia"
+    },
+    {
+      "nome": "Misto CSI",
+      "cerca": [
+        "RETTIFICA",
+        "R.D.F",
+        "MISTO"
+      ],
+      "categoria": "MISTO CSI",
+      "genere": "maschile",
+      "nomeSquadra": "R.D.F RETTIFICA\nVBSM",
+      "sponsor": "rdf-rettifica"
+    }
+  ],
+  "sponsor": [
+    {
+      "id": "black-or-white",
+      "nome": "Black or White",
+      "file": "/api/post/assets/sponsor/black-or-white.png",
+      "larghezza": 236
+    },
+    {
+      "id": "pizzeria-regina",
+      "nome": "Pizzeria La Regina",
+      "file": "/api/post/assets/sponsor/pizzeria-regina.png",
+      "larghezza": 192
+    },
+    {
+      "id": "sea-ladurini",
+      "nome": "S.E.A. di Ladurini",
+      "file": "/api/post/assets/sponsor/sea-ladurini.png",
+      "larghezza": 244
+    },
+    {
+      "id": "ocl-lavanderia",
+      "nome": "OCL Lavanderia",
+      "file": "/api/post/assets/sponsor/ocl-lavanderia.png",
+      "larghezza": 286
+    },
+    {
+      "id": "rdf-rettifica",
+      "nome": "Rettifica RDF",
+      "file": "/api/post/assets/sponsor/rdf-rettifica.png",
+      "larghezza": 218
+    }
+  ],
+  "avversari": [
+    {
+      "nome": "RPF Biasola Volley",
+      "alias": [
+        "RPF BIASOLA VOLLEY",
+        "BIASOLA",
+        "RPF",
+        "R.P.F"
+      ],
+      "logo": "/api/post/assets/loghi/rpf-biasola.png"
+    },
+    {
+      "nome": "Heron Volley",
+      "alias": [
+        "HERON VOLLEY",
+        "HERON"
+      ],
+      "logo": "/api/post/assets/loghi/heron-volley.png"
+    },
+    {
+      "nome": "US Nuova Cupola",
+      "alias": [
+        "NUOVA CUPOLA",
+        "CUPLETS NC",
+        "CUPOLA",
+        "CUPLETS"
+      ],
+      "logo": "/api/post/assets/loghi/nuova-cupola.png"
+    },
+    {
+      "nome": "CVR",
+      "alias": [
+        "CVR GREEN",
+        "CVR"
+      ],
+      "logo": "/api/post/assets/loghi/cvr.png",
+      "scala": 1.4
+    },
+    {
+      "nome": "Progetto Intesa",
+      "alias": [
+        "PROGETTO INTESA"
+      ],
+      "logo": "/api/post/assets/loghi/progetto-intesa.png"
+    },
+    {
+      "nome": "OSGB Volley",
+      "alias": [
+        "OSGB VOLLEY",
+        "OSGB"
+      ],
+      "logo": "/api/post/assets/loghi/osgb-volley.png",
+      "scala": 1.15
+    }
+  ]
+}

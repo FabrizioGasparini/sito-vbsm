@@ -30,6 +30,9 @@ Copiare `.env.example` in `.env` e compilare tutti i valori. Il file `.env` **no
 | `NEXT_PUBLIC_SITE_URL` | URL pubblico (canonical, sitemap, Open Graph). Default `https://volleyballsanmartino.it` |
 | `UPLOAD_DIR` | Cartella degli upload. Default `C:\VBSM\storage\uploads` |
 | `FIPAV_SEASON_YEAR` | Opzionale: forza l'anno della stagione per il calendario FIPAV |
+| `POST_DATA_DIR` | Opzionale: cartella dati del generatore di post (default: `post-generator` accanto a `UPLOAD_DIR`) |
+| `POST_PUBLIC_URL` | Opzionale: URL pubblico da cui Instagram scarica le immagini (default `NEXT_PUBLIC_SITE_URL`) |
+| `INSTAGRAM_API_VERSION` | Opzionale: versione dell'API di Instagram (default `v26.0`) |
 
 ## Comandi
 
@@ -58,4 +61,5 @@ app/            pagine (App Router), API in app/api, robots.ts, sitemap.ts, not-
 components/     componenti condivisi (navigazione, footer, cookie banner) e components/ui
 lib/            accesso dati (Prisma), autenticazione, rate limit, upload, SEO (seo.ts, site.ts)
 prisma/         schema del database
+post-generator/ generatore dei post partite (/admin/post), vedi post-generator/README.md
 ```

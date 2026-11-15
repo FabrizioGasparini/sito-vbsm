@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArrowRight, Newspaper, ShieldCheck, UsersRound } from "lucide-react"
+import { ArrowRight, ImagePlus, Newspaper, ShieldCheck, UsersRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -19,6 +19,14 @@ const adminCards = [
     label: "Gestisci giocatori",
     icon: UsersRound,
     bullets: ["Aggiungi nuovi giocatori", "Aggiorna giocatori esistenti", "Gestisci ruoli e capitani"],
+  },
+  {
+    title: "Post partite",
+    description: "Crea i post con i risultati delle partite e pubblicali su Instagram, anche dal telefono.",
+    href: "/admin/post",
+    label: "Crea un post",
+    icon: ImagePlus,
+    bullets: ["Risultati FIPAV già compilati", "Loghi, colori e sponsor automatici", "Pubblicazione diretta su Instagram"],
   },
 ]
 
@@ -48,7 +56,7 @@ export default function AdminPage() {
           </div>
         </section>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {adminCards.map((card) => {
             const Icon = card.icon
 
