@@ -44,6 +44,17 @@ function r2() {
   return client
 }
 
+/**
+ * Richiesta firmata verso R2. Si firma e poi si invia con il body originale: aws4fetch.fetch() lo
+ * trasformerebbe in uno stream, che dentro Next.js parte senza Content-Length e R2 risponde 411.
+ */
+async function r2Fetch(url: string, init: { method: "GET" | "PUT"; headers?: Record<string, string>; body?: Uint8Array }) {
+  // I tipi DOM non accettano Uint8Array<ArrayBufferLike> come body, ma fetch di Node sì
+  const body = init.body as BodyInit | undefined
+  const signed = await r2().sign(url, { method: init.method, headers: init.headers, body })
+  return fetch(signed.url, { method: init.method, headers: signed.headers, body, cache: "no-store" })
+}
+
 /** true se l'area (e, per "media", quel percorso) usa R2 */
 export function usesR2(area: StorageArea, key = "") {
   if (!AREAS[area].bucket) return false
@@ -86,7 +97,7 @@ export async function putFile(area: StorageArea, key: string, body: Buffer | str
 
   const headers: Record<string, string> = { "Content-Type": options.contentType }
   if (options.cacheControl) headers["Cache-Control"] = options.cacheControl
-  const res = await r2().fetch(objectUrl(area, key), { method: "PUT", body: new Uint8Array(data), headers })
+  const res = await r2Fetch(objectUrl(area, key), { method: "PUT", body: new Uint8Array(data), headers })
   if (!res.ok) throw new Error(`R2 PUT ${key}: ${res.status} ${await res.text().catch(() => "")}`.trim())
 }
 
@@ -103,7 +114,7 @@ export async function getFile(area: StorageArea, key: string): Promise<{ body: B
     }
   }
 
-  const res = await r2().fetch(objectUrl(area, key), { method: "GET" })
+  const res = await r2Fetch(objectUrl(area, key), { method: "GET" })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`R2 GET ${key}: ${res.status}`)
   return { body: Buffer.from(await res.arrayBuffer()), contentType: res.headers.get("content-type") }
@@ -133,7 +144,7 @@ async function listR2(area: StorageArea, prefix: string, delimiter?: string) {
     url.searchParams.set("prefix", areaPrefix + prefix)
     if (delimiter) url.searchParams.set("delimiter", delimiter)
     if (token) url.searchParams.set("continuation-token", token)
-    const res = await r2().fetch(url.toString(), { method: "GET" })
+    const res = await r2Fetch(url.toString(), { method: "GET" })
     if (!res.ok) throw new Error(`R2 LIST ${prefix}: ${res.status}`)
     const xml = await res.text()
     for (const m of xml.matchAll(/<Contents>[\s\S]*?<Key>([\s\S]*?)<\/Key>/g)) keys.push(decodeXml(m[1]).slice(areaPrefix.length))
